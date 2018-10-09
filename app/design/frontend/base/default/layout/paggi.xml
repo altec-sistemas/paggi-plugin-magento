@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Magento
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to atendimento@saffira.com.br so we can send you a copy immediately.
+ *
+ * @category   Saffira / maxiPago
+ * @package    MaxiPago_CheckoutApi
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+-->
+<layout version="1.0.2">
+
+    <default>
+        <reference name="head">
+            <action method="addJs"><script>paggi/payment.js</script></action>
+            <action method="addItem"><type>js_css</type><script>paggi/payment.css</script></action>
+        </reference>
+    </default>
+
+    <customer_account>
+        <!-- Mage_Wishlist -->
+        <reference name="customer_account_navigation">
+            <action method="addLink" translate="label" module="paggi" ifconfig="payment/paggi_cc/cc_can_save">
+                <name>paggi</name>
+                <path>paggi/cc</path>
+                <label>My Saved Cards</label>
+            </action>
+        </reference>
+    </customer_account>
+
+    <paggi_cc_index translate="label">
+        <label>Paggi - My Saved Cards</label>
+        <update handle="customer_account"/>
+        <reference name="my.account.wrapper">
+            <block type="paggi/customer_cc_list" name="paggi_customer_cc_list" template="paggi/customer/cc/list.phtml"/>
+        </reference>
+    </paggi_cc_index>
+
+    <paggi_cc_edit translate="label">
+        <label>Paggi - My Saved Cards - Edit</label>
+        <update handle="customer_account"/>
+        <reference name="my.account.wrapper">
+            <block type="review/customer_cc_edit" name="paggi_customer_cc_edit"/>
+        </reference>
+    </paggi_cc_edit>
+
+    <checkout_onepage_success>
+        <reference name="checkout.success">
+            <block type="core/template" name="checkout.success.info">
+                <action method="setTemplate" ifconfig="payment/paggi_settings/show_payment_info">
+                    <template>paggi/checkout/info.phtml</template>
+                </action>
+            </block>
+        </reference>
+    </checkout_onepage_success>
+
+    <sales_order_view>
+        <reference name="order_totals">
+            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+        </reference>
+    </sales_order_view>
+    <sales_order_print>
+        <reference name="order_totals">
+            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+        </reference>
+    </sales_order_print>
+    <sales_email_order_items>
+        <reference name="order_totals">
+            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+        </reference>
+    </sales_email_order_items>
+
+    <sales_order_invoice>
+        <reference name="invoice_totals">
+            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+        </reference>
+    </sales_order_invoice>
+    <sales_order_printinvoice>
+        <reference name="invoice_totals">
+            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+        </reference>
+    </sales_order_printinvoice>
+    <sales_email_order_invoice_items>
+        <reference name="invoice_totals">
+            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+        </reference>
+    </sales_email_order_invoice_items>
+
+    <sales_order_creditmemo>
+        <reference name="creditmemo_totals">
+            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+        </reference>
+    </sales_order_creditmemo>
+    <sales_order_printcreditmemo>
+        <reference name="creditmemo_totals">
+            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+        </reference>
+    </sales_order_printcreditmemo>
+    <sales_email_order_creditmemo_items>
+        <reference name="creditmemo_totals">
+            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+        </reference>
+    </sales_email_order_creditmemo_items>
+
+</layout>

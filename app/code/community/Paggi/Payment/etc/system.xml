@@ -1,0 +1,456 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Magento
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to contato@paggi.com.br so we can send you a copy immediately.
+ *
+ * @category   Paggi
+ * @package    Paggi_Payment
+ * @author        Thiago Contardi <thiago@contardi.com.br>
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ *
+-->
+<config>
+    <sections>
+        <payment>
+            <groups>
+                <paggi_settings translate="label, comment, tooltip" module="paggi">
+                    <label>Paggi</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>180</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>e>
+                    <show_in_store>1</show_in_store>
+                    <comment><![CDATA[
+                        <div class="paggi_main">
+                            <div class="paggi_description">
+                                <strong>Módulo Magento Paggi versão 1.0.0</strong>
+                            </div>
+                        </div>
+                    ]]></comment>
+                    <fields>
+                        <instructions translate="label">
+                            <label>Instructions</label>
+                            <frontend_type>label</frontend_type>
+                            <frontend_model>paggi/adminhtml_system_config_settings_comment</frontend_model>
+                            <sort_order>1</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </instructions>
+                        <partner_id translate="label">
+                            <label>Merchant ID</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>10</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>Merchant ID which identifies the seller</comment>
+                        </partner_id>
+                        <token translate="label">
+                            <label>Token</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>11</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>Store's Merchant Key</comment>
+                        </token>
+                        <sandbox translate="label">
+                            <label>Test Environment.</label>
+                            <comment>It should inform if test environment will be used, the accounts will not be processed in Sandbox environment.</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>30</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </sandbox>
+                        <show_taxvat_field translate="label">
+                            <label>Show Taxvat field at the checkout</label>
+                            <comment>If you want to show the taxvat field at the store's checkout.</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>40</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>We recommend not enabling this function in order to allow a customer buy with another credit card</comment>
+                        </show_taxvat_field>
+                        <customer_attribute_type>
+                            <label>Atributo do Tipo Pessoa</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>paggi/source_customer_attributes</source_model>
+                            <sort_order>41</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>Attribute that identifies the type of customer.</comment>
+                            <depends>
+                                <show_taxvat_field>0</show_taxvat_field>
+                            </depends>
+                        </customer_attribute_type>
+                        <customer_attribute_type_value_corporate>
+                            <label>Valor do atributo que indica o cadastro de PJ</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>42</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <show_taxvat_field>0</show_taxvat_field>
+                            </depends>
+                        </customer_attribute_type_value_corporate>
+                        <cpf_customer_attribute>
+                            <label>CPF Attribute</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>paggi/source_customer_attributes</source_model>
+                            <sort_order>43</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>Attribute that will be used to determined if the customer is a Store.</comment>
+                            <depends>
+                                <show_taxvat_field>0</show_taxvat_field>
+                            </depends>
+                        </cpf_customer_attribute>
+                        <cnpj_customer_attribute>
+                            <label>CNPJ Attribute</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>paggi/source_customer_attributes</source_model>
+                            <sort_order>44</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>Attribute that will be used to determined if the customer is a Store.</comment>
+                            <depends>
+                                <show_taxvat_field>0</show_taxvat_field>
+                            </depends>
+                        </cnpj_customer_attribute>
+
+                        <stop_processing>
+                            <label>Stop transaction when not approved</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>50</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[If the transaction isn't approved, it'll trigger an error to the customer.<br>It'll create an request at Paggi and will not create the store's order.]]></comment>
+                        </stop_processing>
+
+                        <automatically_cancel>
+                            <label>Automatically Cancel</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>60</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>If the payment request isn't approved, the order is automatically cancelled</comment>
+                        </automatically_cancel>
+                        <show_payment_info>
+                            <label>Show Payment Info at Success Page</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>70</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[If your Magento show the payment info at success page DON'T enable this feature]]></comment>
+                        </show_payment_info>
+                        <cron_time>
+                            <label>Cron execution time</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>paggi/source_cron</source_model>
+                            <sort_order>100</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </cron_time>
+                        <debug>
+                            <label>Enable Log</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>200</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>It'll log all the requests and response in "var/log/paggi.log".</comment>
+                        </debug>
+
+                        <paggi_cc type="group">
+                            <label>Paggi - Credit Card</label>
+                            <frontend_model>paggi/adminhtml_system_config_form_fieldset</frontend_model>
+                            <sort_order>1000</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <fields>
+                                <active>
+                                    <label>Enabled</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>adminhtml/system_config_source_yesno</source_model>
+                                    <sort_order>10</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </active>
+
+                                <title>
+                                    <label>Title</label>
+                                    <frontend_type>text</frontend_type>
+                                    <sort_order>20</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </title>
+
+                                <allowed_brands>
+                                    <label>Allowed Brands</label>
+                                    <frontend_type>multiselect</frontend_type>
+                                    <source_model>paggi/source_cctype</source_model>
+                                    <sort_order>25</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </allowed_brands>
+
+                                <capture>
+                                    <label>Payment Action</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>paggi/source_action</source_model>
+                                    <sort_order>30</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </capture>
+
+                                <cc_can_save translate="label">
+                                    <label>Allow Customer Save Credit Card?</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>adminhtml/system_config_source_yesno</source_model>
+                                    <sort_order>40</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </cc_can_save>
+
+                                <can_refund>
+                                    <label>Refund when create credit memo</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>adminhtml/system_config_source_yesno</source_model>
+                                    <sort_order>50</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </can_refund>
+
+                                <use_recurring_profile translate="label">
+                                    <label>Can Use Recurring Profile</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>adminhtml/system_config_source_yesno</source_model>
+                                    <sort_order>100</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </use_recurring_profile>
+
+                                <order_status>
+                                    <label>New Order Status</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>adminhtml/system_config_source_order_status</source_model>
+                                    <sort_order>200</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </order_status>
+
+                                <authorized_order_status>
+                                    <label>Authorized Order Status</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>adminhtml/system_config_source_order_status</source_model>
+                                    <sort_order>210</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </authorized_order_status>
+
+                                <captured_order_status>
+                                    <label>Captured Order Status</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>adminhtml/system_config_source_order_status</source_model>
+                                    <sort_order>220</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </captured_order_status>
+
+                                <installments>
+                                    <label>Enable Installments</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>adminhtml/system_config_source_yesno</source_model>
+                                    <sort_order>300</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </installments>
+                                <max_installments>
+                                    <label>Max Installments</label>
+                                    <frontend_type>text</frontend_type>
+                                    <sort_order>320</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                    <validate>validate-digits</validate>
+                                    <depends>
+                                        <installments>1</installments>
+                                    </depends>
+                                </max_installments>
+
+                                <minimum_installments_value>
+                                    <label>Minimium Installments Value</label>
+                                    <frontend_type>text</frontend_type>
+                                    <sort_order>330</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                    <validate>validate-digits</validate>
+                                    <depends>
+                                        <installments>1</installments>
+                                    </depends>
+                                </minimum_installments_value>
+
+                                <use_interest_per_installments>
+                                    <label>Use Interest Per Installments</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>adminhtml/system_config_source_yesno</source_model>
+                                    <sort_order>340</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                    <comment><![CDATA[The config above will be ignored]]></comment>
+                                </use_interest_per_installments>
+
+                                <interest_rate>
+                                    <label>General Interest Rate</label>
+                                    <frontend_type>text</frontend_type>
+                                    <sort_order>350</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                    <validate>validate-number</validate>
+                                    <comment><![CDATA[Use numbers in computer format, with dot (.) as decimal separator (e.g. 1.6)]]></comment>
+                                    <depends>
+                                        <installments>1</installments>
+                                        <use_interest_per_installments>0</use_interest_per_installments>
+                                    </depends>
+                                </interest_rate>
+
+                                <installments_without_interest_rate>
+                                    <label>Installments without interest</label>
+                                    <frontend_type>text</frontend_type>
+                                    <sort_order>360</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                    <validate>validate-digits</validate>
+                                    <depends>
+                                        <installments>1</installments>
+                                        <use_interest_per_installments>0</use_interest_per_installments>
+                                    </depends>
+                                </installments_without_interest_rate>
+
+                                <interest_type>
+                                    <label>Interest Rate Type</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>paggi/source_type</source_model>
+                                    <sort_order>370</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                    <depends>
+                                        <installments>1</installments>
+                                        <use_interest_per_installments>0</use_interest_per_installments>
+                                    </depends>
+                                </interest_type>
+
+                                <interest_rate_per_installments translate="label">
+                                    <label>Interest Rate Per Installments</label>
+                                    <frontend_model>paggi/adminhtml_system_config_form_field_interest</frontend_model>
+                                    <backend_model>adminhtml/system_config_backend_serialized_array</backend_model>
+                                    <sort_order>380</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                    <comment><![CDATA[Use numbers in computer format, with dot (.) as decimal separator (e.g. 1.6)]]></comment>
+                                    <depends>
+                                        <installments>1</installments>
+                                    </depends>
+                                </interest_rate_per_installments>
+
+                                <allowspecific>
+                                    <label>Payment from Applicable Countries</label>
+                                    <frontend_type>allowspecific</frontend_type>
+                                    <sort_order>400</sort_order>
+                                    <source_model>adminhtml/system_config_source_payment_allspecificcountries</source_model>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </allowspecific>
+                                <specificcountry>
+                                    <label>Payment from Specific Countries</label>
+                                    <frontend_type>multiselect</frontend_type>
+                                    <sort_order>410</sort_order>
+                                    <source_model>adminhtml/system_config_source_country</source_model>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                </specificcountry>
+                                <min_order_total>
+                                    <label>Minimum Order Total</label>
+                                    <frontend_type>text</frontend_type>
+                                    <sort_order>420</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                    <validate>validate-number</validate>
+                                </min_order_total>
+                                <max_order_total>
+                                    <label>Maximum Order Total</label>
+                                    <frontend_type>text</frontend_type>
+                                    <sort_order>430</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                    <validate>validate-number</validate>
+                                </max_order_total>
+                                <sort_order>
+                                    <label>Sort Order</label>
+                                    <frontend_type>text</frontend_type>
+                                    <sort_order>1000</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                    <validate>validate-digits</validate>
+                                </sort_order>
+
+                            </fields>
+                        </paggi_cc>
+
+                    </fields>
+                </paggi_settings>
+            </groups>
+        </payment>
+    </sections>
+</config>

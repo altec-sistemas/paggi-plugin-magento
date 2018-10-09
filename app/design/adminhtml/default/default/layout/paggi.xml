@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Magento
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to contato@paggi.com.br so we can send you a copy immediately.
+ *
+ * @category   Paggi
+ * @package    Paggi_Payment
+ * @author     Thiago Contardi <thiago@contardi.com.br>
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+-->
+<layout version="1.0.2">
+    <adminhtml_sales_order_create_index>
+        <reference name="head">
+            <action method="addJs"><script>paggi/payment.js</script></action>
+            <action method="addItem"><type>js_css</type><script>paggi/payment.css</script></action>
+        </reference>
+    </adminhtml_sales_order_create_index>
+
+    <adminhtml_sales_order_view>
+        <reference name="order_totals">
+            <block type="adminhtml/sales_order_totals_item" name="paggi.interest" template="paggi/interest/total.phtml"/>
+        </reference>
+    </adminhtml_sales_order_view>
+
+    <adminhtml_sales_order_invoice_new>
+        <reference name="invoice_totals">
+            <block type="adminhtml/sales_order_totals_item" name="paggi.interest" template="paggi/interest/total.phtml"/>
+        </reference>
+    </adminhtml_sales_order_invoice_new>
+
+    <adminhtml_sales_order_invoice_updateqty>
+        <reference name="invoice_totals">
+            <block type="adminhtml/sales_order_totals_item" name="paggi.interest" template="paggi/interest/total.phtml"/>
+        </reference>
+    </adminhtml_sales_order_invoice_updateqty>
+
+    <adminhtml_sales_order_invoice_view>
+        <reference name="invoice_totals">
+            <block type="adminhtml/sales_order_totals_item" name="paggi.interest" template="paggi/interest/total.phtml"/>
+        </reference>
+    </adminhtml_sales_order_invoice_view>
+
+    <adminhtml_sales_order_creditmemo_new>
+        <reference name="creditmemo_totals">
+            <block type="adminhtml/sales_order_totals_item" name="paggi.interest" template="paggi/interest/total.phtml"/>
+        </reference>
+    </adminhtml_sales_order_creditmemo_new>
+
+    <adminhtml_sales_order_creditmemo_updateqty>
+        <reference name="creditmemo_totals">
+            <block type="adminhtml/sales_order_totals_item" name="paggi.interest" template="paggi/interest/total.phtml"/>
+        </reference>
+    </adminhtml_sales_order_creditmemo_updateqty>
+
+    <adminhtml_sales_order_creditmemo_view>
+        <reference name="creditmemo_totals">
+            <block type="adminhtml/sales_order_totals_item" name="paggi.interest" template="paggi/interest/total.phtml"/>
+        </reference>
+    </adminhtml_sales_order_creditmemo_view>
+</layout>

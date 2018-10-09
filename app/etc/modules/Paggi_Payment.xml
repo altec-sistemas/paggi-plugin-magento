@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!--
+/**
+ *
+ *
+ * INFORMAÇÕES SOBRE LICENÇA
+ *
+ * Open Software License (OSL 3.0).
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * DISCLAIMER
+ *
+ * Não edite este arquivo caso você pretenda atualizar este módulo futuramente
+ * para novas versões.
+ *
+ * @category      Paggi
+ * @package       Paggi_Payment
+ * @author        Thiago Contardi <thiago@contardi.com.br>
+ *
+ * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ *
+ */
+-->
+<config>
+    <modules>
+        <Paggi_Payment>
+            <active>true</active>
+            <codePool>community</codePool>
+            <depends>
+                <Mage_Payment />
+            </depends>
+        </Paggi_Payment>
+    </modules>
+</config>
