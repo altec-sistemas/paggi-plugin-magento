@@ -254,6 +254,7 @@
         <payment>
             <paggi_settings>
                 <api_url>https://api.paggi.com/v1/</api_url>
+                <sandbox_url>https://api.stg.paggi.com/v1/</sandbox_url>
                 <show_taxvat_field>1</show_taxvat_field>
                 <cpf_customer_attribute>taxvat</cpf_customer_attribute>
                 <cnpj_customer_attribute>taxvat</cnpj_customer_attribute>

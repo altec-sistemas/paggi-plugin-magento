@@ -415,18 +415,24 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
      * @param Mage_Sales_Model_Order $order
      * @param string $paggiOrderId
      * @param $amount
-     * @return array|bool
+     * @return stdClass
      */
     public function capture($order, $paggiOrderId, $amount)
     {
+        $error = $this->getHelper()->__('Error capturing order %s', $order->getIncrementId());
+
         $endpoint = $this->getHelper()->getEndpoint('capture', $paggiOrderId);
         $response = $this->getService()->doPutRequest($endpoint);
-        $responseData = json_decode($response->getBody());
 
-        $this->getHelper()->saveTransaction($endpoint, $responseData, $order->getIncrementId());
+        if ($response) {
 
-        if (!property_exists($responseData, 'id')) {
-            $error = $this->getHelper()->__('Error capturing order %s', $order->getIncrementId());
+            $responseData = Mage::helper('core')->jsonDecode($response->getBody(), false);
+            $this->getHelper()->saveTransaction($endpoint, $responseData, $order->getIncrementId());
+
+            if (!property_exists($responseData, 'id')) {
+                Mage::throwException($error);
+            }
+        } else {
             Mage::throwException($error);
         }
 
@@ -437,20 +443,24 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
      * @param Mage_Sales_Model_Order $order
      * @param string $paggiOrderId
      * @param $amount
-     * @return bool
+     * @return stdClass
      */
-    public function refund($order, $paggiOrderId, $amount)
+    public function refund($order, $paggiOrderId)
     {
-        $amount = number_format($amount, 2, '.', '');
+        $error = $this->getHelper()->__('Error voiding order %s', $order->getIncrementId());
         $endpoint = $this->getHelper()->getEndpoint('void', $paggiOrderId);
 
         $response = $this->getService()->doPostRequest($endpoint);
-        $responseData = json_decode($response->getBody());
 
-        $this->getHelper()->saveTransaction($endpoint, $responseData, $order->getIncrementId());
+        if ($response) {
+            $responseData = Mage::helper('core')->jsonDecode($response->getBody(), false);
+            $this->getHelper()->saveTransaction($endpoint, $responseData, $order->getIncrementId());
 
-        if (!property_exists($responseData, 'id')) {
-            $error = $this->getHelper()->__('Error voiding order %s', $order->getIncrementId());
+            if (!property_exists($responseData, 'id')) {
+                Mage::throwException($error);
+            }
+
+        } else {
             Mage::throwException($error);
         }
 

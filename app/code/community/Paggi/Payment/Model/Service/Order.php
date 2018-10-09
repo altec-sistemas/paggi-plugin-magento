@@ -93,8 +93,6 @@ class Paggi_Payment_Model_Service_Order
     {
         $method = null;
 
-        $token = $this->getHelper()->getConfig('token');
-
         $this->getHttpClient()->resetParameters(true);
         $this->getHttpClient()->setHeaders('Content-Type', 'application/json');
         $this->getHttpClient()->setHeaders('Accept', 'application/json;charset=UTF8');
@@ -158,7 +156,11 @@ class Paggi_Payment_Model_Service_Order
 
     protected function getServiceUrl()
     {
-        return $this->getHelper()->getConfig('api_url');
+        $url = $this->getHelper()->getConfig('api_url');
+        if ($this->getHelper()->getConfig('sandbox')) {
+            $url = $this->getHelper()->getConfig('sandbox_url');
+        }
+        return $url;
     }
 
     /**

@@ -242,10 +242,12 @@ class Paggi_Payment_Model_Method_Cc
                 /** @var Paggi_Payment_Model_Api $this ->getOrderModel() */
                 $response = $this->getHelper()->getApi()->capture($order, $paggiOrderId, $amount);
 
-
-                //@TODO
-                if (isset($response['transactionID'])) {
-                    $transactionId = $response['transactionID'];
+                if (
+                    property_exists($response, 'id')
+                    && $response->id
+                    && $response->status == 'captured'
+                ) {
+                    $transactionId = $response->id;
                     $payment->setAdditionalInformation('captured', true);
                     $payment->setAdditionalInformation('captured_date', date('Y-m-d'));
                     $payment->setParentTransactionId($transactionId);
@@ -255,6 +257,7 @@ class Paggi_Payment_Model_Method_Cc
                 }
             }
         }
+
         return parent::capture($payment, $amount);
     }
 
@@ -265,30 +268,13 @@ class Paggi_Payment_Model_Method_Cc
      */
     public function refund(Varien_Object $payment, $amount)
     {
-        //@TODO
         if (!$payment->getAdditionalInformation('recurring_profile')) {
-            /** @var Mage_Sales_Model_Order $order */
-            $order = $payment->getOrder();
             if ($payment->canRefund()) {
-                $hasInterest = $payment->getAdditionalInformation('cc_has_interest');
-                if ($hasInterest) {
-                    $amount = $payment->getAdditionalInformation('cc_total_with_interest');
-                }
-                $paggiOrderId = $payment->getAdditionalInformation('order_id');
 
-                $captured = $payment->getAdditionalInformation('captured');
-                $capturedDate = $payment->getAdditionalInformation('captured_date');
-                $currentDate = new DateTime();
-                $currentDate = $currentDate->format('Y-m-d');
+                /** @var Mage_Sales_Model_Order $order */
+                $order = $payment->getOrder();
+                $this->cancellOrder($order, $payment);
 
-                if ($captured && $capturedDate == $currentDate) {
-
-                    $transactionId = $payment->getAdditionalInformation('transaction_id');
-                    $this->getHelper()->getApi()->void($order, $transactionId);
-
-                } else {
-                    $this->getHelper()->getApi()->refund($order, $paggiOrderId, $amount);
-                }
             }
         }
         return parent::refund($payment, $amount);
@@ -301,16 +287,40 @@ class Paggi_Payment_Model_Method_Cc
     public function void(Varien_Object $payment)
     {
         if (!$payment->getAdditionalInformation('recurring_profile')) {
-            /** @var Mage_Sales_Model_Order $order */
-            $order = $payment->getOrder();
             if ($payment->canVoid($payment)) {
 
-                $transactionId = $payment->getAdditionalInformation('transaction_id');
-                $this->getHelper()->getApi()->void($order, $transactionId);
+                /** @var Mage_Sales_Model_Order $order */
+                $order = $payment->getOrder();
+                $this->cancellOrder($order, $payment);
 
             }
         }
         return parent::void($payment);
+    }
+
+    /**
+     * @param Mage_Sales_Model_Order $order
+     * @param Mage_Sales_Model_Order_Payment $payment
+     * @throws Mage_Core_Exception
+     */
+    protected function cancellOrder($order, $payment)
+    {
+        $paggiOrderId = $payment->getAdditionalInformation('order_id');
+        $response = $this->getHelper()->getApi()->refund($order, $paggiOrderId);
+
+        if (
+            property_exists($response, 'id')
+            && $response->id
+            && $response->status == 'cancelled'
+        ) {
+            $payment->setAdditionalInformation('cancelled', true);
+            $payment->setAdditionalInformation('cancelled_date', date('Y-m-d'));
+            $payment->save();
+        } else {
+            Mage::throwException($this->getHelper()->__('There was an error capturing your order at Paggi'));
+        }
+
+        return true;
     }
 
     /**
