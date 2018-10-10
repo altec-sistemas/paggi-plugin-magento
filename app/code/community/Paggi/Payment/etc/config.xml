@@ -121,58 +121,58 @@
         <sales>
             <quote>
                 <totals>
-                    <interest>
+                    <paggi_interest>
                         <class>paggi/total_quote_interest</class>
-                        <after>grand_total</after>
-                    </interest>
+                        <before>grand_total</before>
+                    </paggi_interest>
                 </totals>
             </quote>
             <order_invoice>
                 <totals>
-                    <interest>
+                    <paggi_interest>
                         <class>paggi/total_invoice_interest</class>
-                    </interest>
+                    </paggi_interest>
                 </totals>
             </order_invoice>
             <order_creditmemo>
                 <totals>
-                    <interest>
+                    <paggi_interest>
                         <class>paggi/total_creditmemo_interest</class>
-                    </interest>
+                    </paggi_interest>
                 </totals>
             </order_creditmemo>
         </sales>
         <pdf>
             <totals>
-                <interest translate="title">
+                <paggi_interest translate="title">
                     <title>Interest</title>
-                    <source_field>interest_amount</source_field>
+                    <source_field>paggi_interest_amount</source_field>
                     <font_size>7</font_size>
                     <display_zero>0</display_zero>
                     <sort_order>202</sort_order>
-                </interest>
+                </paggi_interest>
             </totals>
         </pdf>
 
         <fieldsets>
             <sales_convert_quote_address>
-                <interest_amount>
+                <paggi_interest_amount>
                     <to_order>*</to_order>
-                </interest_amount>
-                <base_interest_amount>
+                </paggi_interest_amount>
+                <base_paggi_interest_amount>
                     <to_order>*</to_order>
-                </base_interest_amount>
+                </base_paggi_interest_amount>
             </sales_convert_quote_address>
 
             <sales_convert_order>
-                <interest_amount>
+                <paggi_interest_amount>
                     <to_invoice>*</to_invoice>
                     <to_shipment>*</to_shipment>
-                </interest_amount>
-                <base_interest_amount>
+                </paggi_interest_amount>
+                <base_paggi_interest_amount>
                     <to_invoice>*</to_invoice>
                     <to_shipment>*</to_shipment>
-                </base_interest_amount>
+                </base_paggi_interest_amount>
             </sales_convert_order>
         </fieldsets>
     </global>

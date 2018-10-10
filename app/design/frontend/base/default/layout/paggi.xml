@@ -1,21 +1,24 @@
 <?xml version="1.0"?>
 <!--
 /**
- * Magento
+ * Bizcommerce Desenvolvimento de Plataformas Digitais Ltda - Epp
  *
- * NOTICE OF LICENSE
+ * INFORMAÇÕES SOBRE LICENÇA
  *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
+ * Open Software License (OSL 3.0).
  * http://opensource.org/licenses/osl-3.0.php
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to atendimento@saffira.com.br so we can send you a copy immediately.
  *
- * @category   Saffira / maxiPago
- * @package    MaxiPago_CheckoutApi
- * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * DISCLAIMER
+ *
+ * Não edite este arquivo caso você pretenda atualizar este módulo futuramente
+ * para novas versões.
+ *
+ * @category      Paggi
+ * @package       Paggi_Payment
+ * @author        Thiago Contardi <thiago@contardi.com.br>
+ *
+ * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ *
  */
 -->
 <layout version="1.0.2">
@@ -66,49 +69,49 @@
 
     <sales_order_view>
         <reference name="order_totals">
-            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+            <block type="paggi/sales_order_total_interest" name="paggi.sales.order.total.interest" />
         </reference>
     </sales_order_view>
     <sales_order_print>
         <reference name="order_totals">
-            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+            <block type="paggi/sales_order_total_interest" name="paggi.sales.order.total.interest" />
         </reference>
     </sales_order_print>
     <sales_email_order_items>
         <reference name="order_totals">
-            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+            <block type="paggi/sales_order_total_interest" name="paggi.sales.order.total.interest" />
         </reference>
     </sales_email_order_items>
 
     <sales_order_invoice>
         <reference name="invoice_totals">
-            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+            <block type="paggi/sales_order_total_interest" name="paggi.sales.order.total.interest" />
         </reference>
     </sales_order_invoice>
     <sales_order_printinvoice>
         <reference name="invoice_totals">
-            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+            <block type="paggi/sales_order_total_interest" name="paggi.sales.order.total.interest" />
         </reference>
     </sales_order_printinvoice>
     <sales_email_order_invoice_items>
         <reference name="invoice_totals">
-            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+            <block type="paggi/sales_order_total_interest" name="paggi.sales.order.total.interest" />
         </reference>
     </sales_email_order_invoice_items>
 
     <sales_order_creditmemo>
         <reference name="creditmemo_totals">
-            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+            <block type="paggi/sales_order_total_interest" name="paggi.sales.order.total.interest" />
         </reference>
     </sales_order_creditmemo>
     <sales_order_printcreditmemo>
         <reference name="creditmemo_totals">
-            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+            <block type="paggi/sales_order_total_interest" name="paggi.sales.order.total.interest" />
         </reference>
     </sales_order_printcreditmemo>
     <sales_email_order_creditmemo_items>
         <reference name="creditmemo_totals">
-            <block type="paggi/sales_order_total_interest" name="sales.order.total.interest" />
+            <block type="paggi/sales_order_total_interest" name="paggi.sales.order.total.interest" />
         </reference>
     </sales_email_order_creditmemo_items>
 

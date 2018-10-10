@@ -23,16 +23,16 @@ class Paggi_Payment_Model_Total_Creditmemo_Interest
     extends Mage_Sales_Model_Order_Creditmemo_Total_Abstract
 {
 
-    protected $_code = 'interest';
+    protected $_code = 'paggi_interest';
 
     public function collect(Mage_Sales_Model_Order_Creditmemo $creditmemo)
     {
         $order = $creditmemo->getOrder();
-        $amount = $order->getInterestAmount();
-        $baseAmount = $order->getBaseInterestAmount();
+        $amount = $order->getPaggiInterestAmount();
+        $baseAmount = $order->getBasePaggiInterestAmount();
         if ($amount) {
-            $creditmemo->setInterestAmount($amount);
-            $creditmemo->setBaseInterestAmount($baseAmount);
+            $creditmemo->setPaggiInterestAmount($amount);
+            $creditmemo->setBasePaggiInterestAmount($baseAmount);
             $creditmemo->setGrandTotal($creditmemo->getGrandTotal() + $amount);
             $creditmemo->setBaseGrandTotal($creditmemo->getBaseGrandTotal() + $baseAmount);
         }

@@ -77,7 +77,7 @@ $tables = array(
     $installer->getTable('sales/creditmemo')
 );
 
-$code = 'interest_amount';
+$code = 'paggi_interest_amount';
 foreach ($tables as $table) {
     if (!$installer->getConnection()->tableColumnExists($table, $code)) {
         $installer->getConnection()->addColumn($table, $code, "DECIMAL( 10, 2 ) NOT NULL");

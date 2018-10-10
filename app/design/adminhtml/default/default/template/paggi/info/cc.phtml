@@ -5,7 +5,7 @@ $info = $this->getInfo();
 /** @var Mage_Sales_Model_Order $order */
 $order = $this->getOrder();
 /** @var Paggi_Payment_Helper_Data $helper */
-$helper = Mage::helper('maxipago');
+$helper = Mage::helper('paggi');
 /** @var Mage_Core_Helper_Data $coreHelper */
 $coreHelper = Mage::helper('core');
 
@@ -28,9 +28,7 @@ $tid = $info->getAdditionalInformation('processor_transaction_id');
 $nsu = $info->getAdditionalInformation('processor_reference_number');
 ?>
 <p><b><?php echo $this->getMethod()->getTitle() ?></b></p>
-<div class="maxipago_cc_information">
-
-    <p><?php echo $this->__('Tipo de Cartão de Crédito: %s', $helper->getBrand($ccType)) ?></p>
+<div class="paggi_cc_information">
 
     <?php if($savedCardUsed): ?>
         <p><?php echo $this->__('Número do Cartão: %s', $savedCardUsed); ?></p>

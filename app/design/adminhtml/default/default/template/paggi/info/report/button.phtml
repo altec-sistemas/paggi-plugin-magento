@@ -4,9 +4,9 @@
 /** @var Mage_Sales_Model_Order $order */
 $order = $this->getOrder();
 /** @var MaxiPago_Payment_Helper_Data $helper */
-$helper = Mage::helper('maxipago');
-$profileUrl = Mage::helper('adminhtml')->getUrl('maxipago_admin/report/index', array('order_id' => $order->getId()));
-$syncUrl = Mage::helper('adminhtml')->getUrl('maxipago_admin/report/sync', array('order_id' => $order->getId()));
+$helper = Mage::helper('paggi');
+$profileUrl = Mage::helper('adminhtml')->getUrl('paggi_admin/report/index', array('order_id' => $order->getId()));
+$syncUrl = Mage::helper('adminhtml')->getUrl('paggi_admin/report/sync', array('order_id' => $order->getId()));
 ?>
 
 <div class="buttons-set">
@@ -18,6 +18,6 @@ $syncUrl = Mage::helper('adminhtml')->getUrl('maxipago_admin/report/sync', array
     <button type="button"
             class="scalable save"
             onclick="window.location.href = '<?php echo $syncUrl;?>';"
-            style=""><span><?php echo $helper->__('Sync order with maxiPago!'); ?></span>
+            style=""><span><?php echo $helper->__('Sync order with Paggi'); ?></span>
     </button>
 </div>

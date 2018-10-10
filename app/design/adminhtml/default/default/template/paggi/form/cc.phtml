@@ -3,7 +3,7 @@ $code = $this->getMethodCode();
 /** @var MaxiPago_Payment_Block_Form_Cc $this */
 
 /** @var MaxiPago_Payment_Helper_Data $helper */
-$helper = Mage::helper('maxipago');
+$helper = Mage::helper('paggi');
 /** @var Mage_Core_Helper_Data $coreHelper */
 $coreHelper = $this->helper('core');
 
@@ -18,25 +18,25 @@ $quote = $helper->getSession()->getQuote();
 $baseGrandTotal = $quote->getBaseGrandTotal();
 ?>
 
-<div id="payment_form_<?php echo $code ?>" class="case maxipago-form" style="display:none;">
+<div id="payment_form_<?php echo $code ?>" class="case paggi-form" style="display:none;">
     <fieldset>
         <div class="card-entry">
             <div class="entry-title"><span><?php echo $this->__('Credit Card'); ?></span></div>
 
             <div class="cartaoform">
                 <div class="input-box radio-flags">
-                    <input type="hidden" name="payment[use_saved_card]" id="maxipagoUseSavedCard" value="0"/>
+                    <input type="hidden" name="payment[use_saved_card]" id="paggiUseSavedCard" value="0"/>
                     <div class="tit"><?php echo $this->__('Selecione:'); ?></div>
                     <?php foreach ($methods as $method) : ?>
                         <?php $slug = $method['slug']; ?>
                         <label>
                             <input type="radio"
                                    name="payment[cc_type]"
-                                   class="maxipago_cc_type"
+                                   class="paggi_cc_type"
                                    title="<?php echo $method['label']; ?>"
                                    value="<?php echo $method['value'] ?>"/>
 
-                            <img src="<?php echo Mage::getBaseUrl('js'); ?>maxipago/cards/<?php echo $slug; ?>.svg"
+                            <img src="<?php echo Mage::getBaseUrl('js'); ?>paggi/cards/<?php echo $slug; ?>.svg"
                                  alt="<?php echo $this->__($method['label']) ?>"
                                  title="<?php echo $this->__($method['label']) ?>"
                             />
@@ -139,11 +139,11 @@ $baseGrandTotal = $quote->getBaseGrandTotal();
                 <input type="hidden" name="payment[recurring_profile]" value="1" />
             <?php else: ?>
                 <div class="pars input-box">
-                    <label for="maxipago_installments" class="required">
+                    <label for="paggi_installments" class="required">
                         <em>*</em><?php echo $this->__('Número de parcelas') ?>
                     </label>
                     <select name="payment[installments]"
-                            id="maxipago_installments"
+                            id="paggi_installments"
                             class="required-entry parcelas">
                         <option value=""><?php echo $this->__('Selecione...'); ?></option>
                         <?php foreach ($installments as $installment): ?>
@@ -172,16 +172,16 @@ $baseGrandTotal = $quote->getBaseGrandTotal();
     </fieldset>
 </div> <!-- case -->
 <script type="text/javascript">
-    $j('#payment_form_<?php echo $code ?> input.maxipago_cc_type').click(function(){
-        $j('#payment_form_<?php echo $code ?> input.maxipago_cc_type').parent().find('img').removeClass('on');
-        $j('#payment_form_<?php echo $code ?> input.maxipago_cc_type').parent().find('img').addClass('off');
+    $j('#payment_form_<?php echo $code ?> input.paggi_cc_type').click(function(){
+        $j('#payment_form_<?php echo $code ?> input.paggi_cc_type').parent().find('img').removeClass('on');
+        $j('#payment_form_<?php echo $code ?> input.paggi_cc_type').parent().find('img').addClass('off');
 
         $j(this).parent().find('img').removeClass('off');
         $j(this).parent().find('img').addClass('on');
     });
     $j('#payment_form_<?php echo $code ?> #<?php echo $code ?>_number').change(function(){
-        var ccType = maxipago.identifyCcNumber($j(this).val());
-        $j('#payment_form_<?php echo $code ?> input.maxipago_cc_type').each(function(){
+        var ccType = paggi.identifyCcNumber($j(this).val());
+        $j('#payment_form_<?php echo $code ?> input.paggi_cc_type').each(function(){
             if ($j(this).val() == ccType) {
                 $j(this).click();
             }

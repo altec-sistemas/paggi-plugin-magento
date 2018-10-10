@@ -23,16 +23,16 @@ class Paggi_Payment_Model_Total_Invoice_Interest
     extends Mage_Sales_Model_Order_Invoice_Total_Abstract
 {
 
-    protected $_code = 'interest';
+    protected $_code = 'paggi_interest';
 
     public function collect(Mage_Sales_Model_Order_Invoice $invoice)
     {
         $order = $invoice->getOrder();
-        $amount = $order->getInterestAmount();
-        $baseAmount = $order->getBaseInterestAmount();
+        $amount = $order->getPaggiInterestAmount();
+        $baseAmount = $order->getBasePaggiInterestAmount();
         if ($amount) {
-            $invoice->setInterestAmount($amount);
-            $invoice->setBaseInterestAmount($baseAmount);
+            $invoice->setPaggiInterestAmount($amount);
+            $invoice->setBasePaggiInterestAmount($baseAmount);
             $invoice->setGrandTotal($invoice->getGrandTotal() + $amount);
             $invoice->setBaseGrandTotal($invoice->getBaseGrandTotal() + $baseAmount);
         }

@@ -24,7 +24,7 @@ class Paggi_Payment_Model_Total_Quote_Interest
 {
 
     protected $_helper;
-    protected $_code = 'interest';
+    protected $_code = 'paggi_interest';
 
     public function __construct()
     {
@@ -58,10 +58,10 @@ class Paggi_Payment_Model_Total_Quote_Interest
                 $interestAmount = $totalOrderWithInterest - $grandTotal;
             }
 
-            $address->setInterestAmount($interestAmount);
-            $address->setBaseInterestAmount($interestAmount);
-            $quote->setInterestAmount($interestAmount);
-            $quote->setBaseInterestAmount($interestAmount);
+            $address->setPaggiInterestAmount($interestAmount);
+            $address->setBasePaggiInterestAmount($interestAmount);
+            $quote->setPaggiInterestAmount($interestAmount);
+            $quote->setBasePaggiInterestAmount($interestAmount);
 
         }
 
@@ -73,7 +73,7 @@ class Paggi_Payment_Model_Total_Quote_Interest
 
     public function fetch(Mage_Sales_Model_Quote_Address $address)
     {
-        $amount = $address->getInterestAmount();
+        $amount = $address->getPaggiInterestAmount();
         if ($amount > 0) {
             $address->addTotal(array(
                 'code' => $this->getCode(),
