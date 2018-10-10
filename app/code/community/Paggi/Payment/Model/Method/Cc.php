@@ -54,7 +54,6 @@ class Paggi_Payment_Model_Method_Cc
         $installments = $data->getInstallments();
         $useSavedCard = $data->getUseSavedCard();
         $grandTotal = $data->getBaseGrandTotal();
-        $hasInterest = false;
 
         $cpfCnpj = $data->getCpfCnpj();
         if (!$this->getHelper()->getConfig('show_taxvat_field')) {

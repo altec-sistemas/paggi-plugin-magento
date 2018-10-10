@@ -96,7 +96,7 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
         $ccCid = Mage::registry('paggi_cc_cid');
 
         $charge = new stdClass();
-        $charge->amount = $amount;
+        $charge->amount = (int) $amount * 100;
         $charge->installments = $ccInstallments;
 
         if ($token) {
@@ -139,7 +139,7 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
 
         $paggiOrder->capture = $this->getHelper()->getConfig('capture', $code) ? true : false;
         $paggiOrder->external_identifier = $orderId;
-        $paggiOrder->charge = $charges;
+        $paggiOrder->charges = $charges;
         $paggiOrder->customer = $customer;
 
         $endpoint = $this->getHelper()->getEndpoint('order');
