@@ -29,12 +29,12 @@
                     <sort_order>180</sort_order>
                     <show_in_default>1</show_in_default>
                     <show_in_website>1</show_in_website>
-                    <show_in_store>1</show_in_store>e>
+                    <show_in_store>1</show_in_store>
                     <show_in_store>1</show_in_store>
                     <comment><![CDATA[
                         <div class="paggi_main">
                             <div class="paggi_description">
-                                <strong>Módulo Magento Paggi versão 1.0.1</strong>
+                                <strong>Módulo Magento Paggi versão 1.0.2</strong>
                             </div>
                         </div>
                     ]]></comment>
