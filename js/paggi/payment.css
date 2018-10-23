@@ -52,6 +52,7 @@
     border-radius: 5px;
     margin: 2px;
     width: 60px;
+    max-height:39px;
 }
 #payment_form_paggi_ticket .radio-flags img,
 #payment_form_paggi_eft .radio-flags img{

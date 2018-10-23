@@ -24,15 +24,12 @@ class Paggi_Payment_Model_Cron
 {
     CONST CRON_FILE = 'paggi-cron.log';
 
-    protected $_helper;
-    protected $_helperOrder;
+    protected $helper;
+    protected $helperOrder;
 
     public function queryPayments()
     {
-        set_include_path(get_include_path() . PATH_SEPARATOR . Mage::getBaseDir('lib') . DS . 'Paggi');
-
-        $this->_getHelper()->log('STARTING CRON', self::CRON_FILE);
-
+        $this->getHelper()->log('STARTING CRON', self::CRON_FILE);
         $ninStatuses = array(
             'complete',
             'canceled',
@@ -55,50 +52,38 @@ class Paggi_Payment_Model_Cron
             ->addFieldToFilter('created_at', array('gt' => $fromDate))
         ;
 
-
         /** @var Mage_Sales_Model_Order $order */
         foreach ($collection as $order) {
 
             if ($order->getId()) {
 
+                /** @var Mage_Sales_Model_Order $order */
                 $order = Mage::getModel('sales/order')->load($order->getId());
-                $this->_getHelper()->log('pullReport ' . $order->getIncrementId(), self::CRON_FILE);
-                /** @var Paggi_Payment_Helper_Data $helper */
-                $helper = $this->_getHelper();
+                $payment = $order->getPayment();
+                $paggiOrderId = $payment->getAdditionalInformation('order_id');
+                $this->getHelper()->log('getOrder ' . $order->getIncrementId(), self::CRON_FILE);
 
-                $response = $helper->getApi()->checkOrders($order, false, self::CRON_FILE);
-                if (isset($response['records'])) {
-                    $record = isset($response['records'][0]) ? $response['records'][0] : null;
-                    if ($record) {
-                        $recurringPayment = isset($record['recurringPaymentFlag']) ? $record['recurringPaymentFlag'] : false;
-                        if ($recurringPayment) {
-                            /** @var Mage_Sales_Model_Recurring_Profile $profile */
-                            $profile = Mage::getModel('sales/recurring_profile')->load($record['orderId'], 'reference_id');
-                            if ($profile->getId()) {
-                                $this->getOrderHelper()->updateRecurringProfile($profile, $record);
-                            }
-                        } else {
-                            $this->getOrderHelper()->updatePayment($order, $record);
-                        }
-                    }
+                $response = $this->getHelper()->getApi()->getOrder($order, $paggiOrderId);
+                if ($response) {
+                    $this->getOrderHelper()->updatePayment($order, $response);
                 }
 
             }
 
         }
-        $this->_getHelper()->log('ENDING CRON', self::CRON_FILE);
+        $this->getHelper()->log('ENDING CRON', self::CRON_FILE);
     }
 
     /**
      * @return Paggi_Payment_Helper_Data|Mage_Core_Helper_Abstract
      */
-    protected function _getHelper()
+    protected function getHelper()
     {
-        if (!$this->_helper) {
-            $this->_helper = Mage::helper('paggi');
+        if (!$this->helper) {
+            $this->helper = Mage::helper('paggi');
         }
 
-        return $this->_helper;
+        return $this->helper;
     }
 
     /**
@@ -106,10 +91,10 @@ class Paggi_Payment_Model_Cron
      */
     protected function getOrderHelper()
     {
-        if (!$this->_helperOrder) {
-            $this->_helperOrder = Mage::helper('paggi/order');
+        if (!$this->helperOrder) {
+            $this->helperOrder = Mage::helper('paggi/order');
         }
 
-        return $this->_helperOrder;
+        return $this->helperOrder;
     }
 }

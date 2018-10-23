@@ -22,7 +22,6 @@
  */
 class Paggi_Payment_Model_Method_Cc
     extends Mage_Payment_Model_Method_Abstract
-    implements Mage_Payment_Model_Recurring_Profile_MethodInterface
 {
     /**
      * unique internal payment method identifier
@@ -30,12 +29,31 @@ class Paggi_Payment_Model_Method_Cc
      */
     protected $_code = 'paggi_cc';
     protected $_canSaveCc = true;
-    protected $_canManageRecurringProfiles = true;
+
+
+    protected $_canUseInternal              = true;
+
+    protected $_isGateway                   = true;
+    protected $_canOrder                    = true;
+    protected $_canAuthorize                = true;
+    protected $_canCapture                  = true;
+    protected $_canCapturePartial           = false;
+    protected $_canCaptureOnce              = true;
+    protected $_canRefund                   = true;
+    protected $_canRefundInvoicePartial     = false;
+    protected $_canVoid                     = true;
+    protected $_canUseCheckout              = true;
+    protected $_canUseForMultishipping      = true;
+    protected $_canFetchTransactionInfo     = true;
+    protected $_canReviewPayment            = true;
+    protected $_canCreateBillingAgreement   = false;
+    protected $_canManageRecurringProfiles = false;
 
     protected $_formBlockType = 'paggi/form_cc';
     protected $_infoBlockType = 'paggi/info_cc';
 
-    protected $_helper;
+    protected $helper;
+    protected $helperOrder;
 
     /**
      * @param mixed $data
@@ -174,7 +192,6 @@ class Paggi_Payment_Model_Method_Cc
         return $this;
     }
 
-
     /**
      * @param Mage_Sales_Model_Order_Payment $payment
      * @return Mage_Sales_Model_Order_Payment
@@ -189,6 +206,10 @@ class Paggi_Payment_Model_Method_Cc
 
         if (property_exists($response, 'external_identifier')) {
             $payment->setAdditionalInformation('external_identifier', $response->external_identifier);
+        }
+
+        if (property_exists($response, 'status')) {
+            $payment->setAdditionalInformation('status', $response->status);
         }
 
         if (property_exists($response, 'charges')) {
@@ -225,18 +246,9 @@ class Paggi_Payment_Model_Method_Cc
 
             /** @var Mage_Sales_Model_Order $order */
             $order = $payment->getOrder();
-            $captured = $payment->getAdditionalInformation('captured');
-
-            if ($order->getGrandTotal() != $captured) {
-                Mage::throwException($this->getHelper()->__('Order already captured partially, the left amount was cancelled at the processor'));
-            }
 
             if ($payment->canCapture()) {
                 $paggiOrderId = $payment->getAdditionalInformation('order_id');
-                $hasInterest = $payment->getAdditionalInformation('cc_has_interest');
-                if ($hasInterest) {
-                    $amount = $payment->getAdditionalInformation('cc_total_with_interest');
-                }
 
                 /** @var Paggi_Payment_Model_Api $this ->getOrderModel() */
                 $response = $this->getHelper()->getApi()->capture($order, $paggiOrderId, $amount);
@@ -272,7 +284,7 @@ class Paggi_Payment_Model_Method_Cc
 
                 /** @var Mage_Sales_Model_Order $order */
                 $order = $payment->getOrder();
-                $this->cancellOrder($order, $payment);
+                $this->cancelOrder($order, $payment);
 
             }
         }
@@ -290,7 +302,7 @@ class Paggi_Payment_Model_Method_Cc
 
                 /** @var Mage_Sales_Model_Order $order */
                 $order = $payment->getOrder();
-                $this->cancellOrder($order, $payment);
+                $this->cancelOrder($order, $payment);
 
             }
         }
@@ -302,7 +314,7 @@ class Paggi_Payment_Model_Method_Cc
      * @param Mage_Sales_Model_Order_Payment $payment
      * @throws Mage_Core_Exception
      */
-    protected function cancellOrder($order, $payment)
+    protected function cancelOrder($order, $payment)
     {
         $paggiOrderId = $payment->getAdditionalInformation('order_id');
         $response = $this->getHelper()->getApi()->refund($order, $paggiOrderId);
@@ -313,7 +325,7 @@ class Paggi_Payment_Model_Method_Cc
             && $response->status == 'cancelled'
         ) {
             $payment->setAdditionalInformation('cancelled', true);
-            $payment->setAdditionalInformation('cancelled_date', date('Y-m-d'));
+            $payment->setAdditionalInformation('cancelled_date', Mage::getSingleton('core/date')->gmtDate());
             $payment->save();
         } else {
             Mage::throwException($this->getHelper()->__('There was an error capturing your order at Paggi'));
@@ -332,221 +344,41 @@ class Paggi_Payment_Model_Method_Cc
             /** @var Mage_Sales_Model_Order $order */
             $order = $payment->getOrder();
             $paggiOrderId = $payment->getAdditionalInformation('order_id');
-            $this->getHelper()->getApi()->void($order, $paggiOrderId);
+            $this->getHelper()->getApi()->refund($order, $paggiOrderId);
         }
 
         return parent::cancel($payment);
     }
 
-    /**
-     * Validate data
-     *
-     * @param Mage_Payment_Model_Recurring_Profile $profile
-     * @throws Mage_Core_Exception
-     */
-    public function validateRecurringProfile(Mage_Payment_Model_Recurring_Profile $profile)
+    public function isAvailable($quote = null)
     {
-
-    }
-
-    /**
-     * Submit to the gateway
-     *
-     * @param Mage_Sales_Model_Recurring_Profile $profile
-     * @param Mage_Payment_Model_Info $paymentInfo
-     */
-    public function submitRecurringProfile(Mage_Payment_Model_Recurring_Profile $profile, Mage_Payment_Model_Info $paymentInfo)
-    {
-        $errors = null;
-        try {
-            /** @var Paggi_Payment_Model_Api $api */
-            $api = $this->getHelper()->getApi();
-            $response = $api->recurringMethod($this, $profile, $paymentInfo);
-
-            if (isset($response['transactionID']) && $response['transactionID']) {
-
-                if ($response['responseCode'] != 0 && $response['responseCode'] != 5){
-
-                    $errors = $this->getHelper()->__('The transaction wasn\'t authorized by the issuer, please check your data and try again');
-                    $profile->setState(Mage_Sales_Model_Recurring_Profile::STATE_CANCELED);
-                    Mage::throwException($errors);
-
-                } else {
-
-                    if (isset($response['orderID'])) {
-
-                        $profile->setData('reference_id', $response['orderID']);
-
-                        if ($profile->getInitAmount()) {
-
-                            $productItemInfo = new Varien_Object();
-                            $productItemInfo->setPaymentType(Mage_Sales_Model_Recurring_Profile::PAYMENT_TYPE_INITIAL);
-                            $productItemInfo->setPrice($profile->getInitAmount());
-                            $productItemInfo->setShippingAmount(0);
-                            $productItemInfo->setTaxAmount(0);
-                            $productItemInfo->setIsVirtual(1);
-
-                            $order = $profile->createOrder($productItemInfo);
-                            $order->save();
-                            if ($order->getId()) {
-
-                                /** @var Mage_Sales_Model_Order_Payment $payment */
-                                $payment = $order->getPayment();
-                                $this->setAdditionalInfo($payment, $response);
-
-                                $profile->addOrderRelation($order->getId());
-                                $this->_getOrderHelper()->setOrderPaymentData($profile, $paymentInfo, $order, $response);
-                            }
-
-                        }
-
-                        $itemInfo = new Varien_Object();
-                        $itemInfo->setData($profile->getOrderItemInfo());
-                        $itemInfo->setPaymentType(Mage_Sales_Model_Recurring_Profile::PAYMENT_TYPE_REGULAR);
-                        $order = $profile->createOrder($itemInfo);
-                        $order->save();
-
-                        if ($order->getId()) {
-
-                            /** @var Mage_Sales_Model_Order_Payment $payment */
-                            $payment = $order->getPayment();
-                            $this->setAdditionalInfo($payment, $response);
-
-                            $profile->addOrderRelation($order->getId());
-                            $this->_getOrderHelper()->setOrderPaymentData($profile, $paymentInfo, $order, $response);
-                        }
-
-                        $profile->setIsProfileActive(1)
-                            ->setState(Mage_Sales_Model_Recurring_Profile::STATE_ACTIVE);
-
-                    }
-
-                }
-            } else {
-                Mage::throwException(Mage::helper('payment')->__('There was an error processing your request. Please contact us or try again later.'));
-            }
-
-        } catch (Exception $e) {
-            Mage::getSingleton('checkout/session')->getQuote()->setReservedOrderId(null);
-            $this->getHelper()->log($e->getMessage());
-            $exception = $errors ?: Mage::helper('payment')->__('There was an error processing your request. Please contact us or try again later.');
-            Mage::throwException($exception);
+        $methodEnabled = $this->getHelper()->getMethodsEnabled();
+        if (empty($methodEnabled)) {
+            return false;
         }
 
-        return $this;
+        return parent::isAvailable($quote);
     }
 
     /**
-     * Fetch details
-     *
-     * @param string $referenceId
-     * @param Varien_Object $result
-     */
-    public function getRecurringProfileDetails($referenceId, Varien_Object $result)
-    {
-        /** @var Mage_Sales_Model_Recurring_Profile $profile */
-        $profile = Mage::getModel('sales/recurring_profile')->load($referenceId, 'reference_id');
-
-        $response = $this->getHelper()->getApi()->pullReportByOrderId($profile->getReferenceId());
-
-        if (intval($response['errorCode']) != 0) {
-            $errorMessage = $response['errorMsg'];
-            $this->getHelper()->log($errorMessage);
-            Mage::throwException($errorMessage);
-        }
-
-        $pageToken = isset($response['pageToken']) ? $response['pageToken'] : null;
-        $pageNumber = isset($response['pageNumber']) ? (int) $response['pageNumber'] : 1;
-        $numberOfPages = isset($response['numberOfPages']) ? $response['numberOfPages'] : 1;
-        $totalNumberOfRecords = $response['totalNumberOfRecords'];
-
-        if ($totalNumberOfRecords > 0) {
-            foreach ($response['records'] as $record) {
-                if ($record['recurringPaymentFlag'] == 1) {
-                    $this->_getOrderHelper()->updateRecurringProfile($profile, $record);
-                }
-            }
-            while ($pageNumber < $numberOfPages) {
-                $pageNumber++;
-                $response = $this->getHelper()->getApi()->pullReportByOrderId($profile->getReferenceId(), $pageToken, $pageNumber);
-
-                foreach ($response['records'] as $record) {
-                    if ($record['recurringPaymentFlag'] == 1) {
-                        $this->_getOrderHelper()->updateRecurringProfile($profile, $record);
-                    }
-                }
-            }
-        }
-
-        if ($profile->getState() == Mage_Sales_Model_Recurring_Profile::STATE_ACTIVE) {
-            $result->setIsProfileActive(true);
-        } else if ($profile->getState() == Mage_Sales_Model_Recurring_Profile::STATE_SUSPENDED) {
-            $result->setIsProfileSuspended(true);
-        }
-    }
-
-    public function canManageRecurringProfiles()
-    {
-        return $this->getConfigData('use_recurring_profile');
-    }
-
-    /**
-     * Check whether can get recurring profile details
-     *
-     * @return bool
-     */
-    public function canGetRecurringProfileDetails()
-    {
-        return true;
-    }
-
-    /**
-     * Update data, it'll use updateRecurringProfileStatus
-     *
-     * @param Mage_Payment_Model_Recurring_Profile $profile
-     */
-    public function updateRecurringProfile(Mage_Payment_Model_Recurring_Profile $profile)
-    {
-        return $this;
-    }
-
-    /**
-     * Manage status
-     *
-     * @param Mage_Payment_Model_Recurring_Profile $profile
-     */
-    public function updateRecurringProfileStatus(Mage_Payment_Model_Recurring_Profile $profile)
-    {
-        /** @var Paggi_Payment_Model_Api $api */
-        $api = $this->getHelper()->getApi();
-        $action = null;
-        switch ($profile->getNewState()) {
-            case Mage_Sales_Model_Recurring_Profile::STATE_CANCELED:
-                if (!$api->cancelRecurring($profile)) {
-                    Mage::throwException($this->getHelper()->__('There was an error while cancelling the recurring profile, please contact us'));
-                }
-                break;
-            case Mage_Sales_Model_Recurring_Profile::STATE_SUSPENDED:
-                if (!$api->updateRecurring($profile, false)) {
-                    Mage::throwException($this->getHelper()->__('There was an error while cancelling the recurring profile, please contact us'));
-                }
-                break;
-            case Mage_Sales_Model_Recurring_Profile::STATE_ACTIVE:
-                if (!$api->updateRecurring($profile, true)) {
-                    Mage::throwException($this->getHelper()->__('There was an error while cancelling the recurring profile, please contact us'));
-                }
-                break;
-        }
-    }
-
-    /**
-     * @return Paggi_Payment_Helper_Data
+     * @return Paggi_Payment_Helper_Data|Mage_Core_Helper_Abstract
      */
     protected function getHelper()
     {
-        if (!$this->_helper) {
-            $this->_helper = Mage::helper('paggi');
+        if (!$this->helper) {
+            $this->helper = Mage::helper('paggi');
         }
-        return $this->_helper;
+        return $this->helper;
+    }
+
+    /**
+     * @return Paggi_Payment_Helper_Order|Mage_Core_Helper_Abstract
+     */
+    protected function getOrderHelper()
+    {
+        if (!$this->helperOrder) {
+            $this->helperOrder = Mage::helper('paggi/order');
+        }
+        return $this->helperOrder;
     }
 }

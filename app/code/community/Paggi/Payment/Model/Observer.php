@@ -22,8 +22,8 @@
  */
 class Paggi_Payment_Model_Observer extends Varien_Event_Observer
 {
-    protected $_helper;
-    protected $_helperOrder;
+    protected $helper;
+    protected $helperOrder;
 
     /**
      * @param Varien_Event_Observer $observer
@@ -31,114 +31,43 @@ class Paggi_Payment_Model_Observer extends Varien_Event_Observer
      */
     public function salesOrderPaymentPlaceEnd(Varien_Event_Observer $observer)
     {
-        /** @var Mage_Sales_Model_Order_Payment $payment */
-        $payment = $observer->getEvent()->getPayment();
-        $availableMethods = $this->_getHelper()->getAvailableMethods();
-        $status = false;
-
-        $methodCode = $payment->getMethod();
-        $message = '';
-        if (in_array($methodCode, $availableMethods)) {
-            /** @var Mage_Sales_Model_Order $order */
-            $order = $payment->getOrder();
-
-            $responseCode = $payment->getAdditionalInformation('response_code');
-            $responseMessage = $payment->getAdditionalInformation('response_message');
-            $tid = $payment->getAdditionalInformation('transaction_id');
-
-            $canCancel = $this->_getHelper()->getConfig('automatically_cancel');
-            $canInvoice = false;
-
-            // Altera o status do pedido para o valor correto
-            if ($responseCode == 0) {
-                if ($methodCode == 'paggi_cc') {
-                    $paymentAction = $this->_getHelper()->getConfig('cc_payment_action', 'paggi_cc');
-                    $authStatus = $this->_getHelper()->getConfig('authorized_order_status', 'paggi_cc');
-                    $saleStatus = $this->_getHelper()->getConfig('captured_order_status', 'paggi_cc');
-                    $message = Mage::helper('paggi')->__('The payment was authorized - Transaction ID: %s', (string)$tid);
-                    if ($paymentAction == 'sale') {
-                        $canInvoice = true;
-                        $status = $saleStatus;
-                    } else {
-                        if ($responseMessage == 'CAPTURED') {
-                            $canInvoice = $this->_getHelper()->getConfig('capture_on_low_risk');
-                        }
-                        $status = $authStatus;
-                    }
-                }
-            } elseif ($responseCode != 5) {
-                $message = Mage::helper('paggi')->__('The payment was\'t authorized - Transaction ID: %s', (string)$tid);
-                //If can cancel, return order
-                if ($canCancel) {
-                    if ($order->canCancel()) {
-                        $order->cancel();
-                    }
-                }
-            }
-
-            if ($canInvoice) {
-                $this->getOrderHelper()->createInvoice($order, $tid);
-            }
-
-            if ($message) {
-                $order->addStatusHistoryComment($message, $status)->setIsCustomerNotified(true);
-                $order->save();
-            }
-        }
-
-        return $this;
-    }
-
-    public function salesOrderPlaceAfter(Varien_Event_Observer $observer)
-    {
         try {
+            /** @var Mage_Sales_Model_Order_Payment $payment */
+            $payment = $observer->getEvent()->getPayment();
+            $methodCode = $payment->getMethod();
+            $status = false;
+            $message = '';
 
-            $this->sendOrderToFraudAnalysis($observer);
+            if ($methodCode == 'paggi_cc') {
+                $tid = $payment->getAdditionalInformation('transaction_id');
+                $capture = $this->getHelper()->getConfig('capture', 'paggi_cc');
 
-            /** @var $order Mage_Sales_Model_Order */
-            $order = $observer->getEvent()->getOrder();
+                /** @var Mage_Sales_Model_Order $order */
+                $order = $payment->getOrder();
 
-            /** @var array $items */
-            $items = $order->getAllItems();
+                if ($capture) {
+                    if ($payment->getAdditionalInformation('status') == 'captured') {
+                        $status = $this->getHelper()->getConfig('captured_order_status', 'paggi_cc');
+                        $this->getOrderHelper()->createInvoice($order);
+                    }
+                } else {
+                    if ($payment->getAdditionalInformation('status') == 'authorized') {
+                        $status = $this->getHelper()->getConfig('authorized_order_status', 'paggi_cc');
+                        $message = $this->getHelper()->__('The payment was authorized - Transaction ID: %s', (string)$tid);
+                    }
+                }
 
-            /** @var Mage_Sales_Model_Order_Item $item */
-            foreach ($items as $item) {
-
-                $seller = $this->getOrderHelper()->getSellerByProductId($item->getProduct()->getId());
-                if ($seller) {
-                    $installments = $order->getPayment()->getAdditionalInformation('installments')
-                        ? $order->getPayment()->getAdditionalInformation('installments')
-                        : 1;
-                    $item->setData('paggi_seller_id', $seller->getId());
-                    $item->setData('paggi_seller_mdr', $seller->getData('seller_mdr'));
-                    $item->setData('paggi_seller_installments', $installments);
-                    $item->save();
+                if ($status) {
+                    $state = $this->getOrderHelper()->getAssignedState($status);
+                    $order->setState($state, $status, $message, true);
+                    $order->save();
                 }
 
             }
-
-
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             Mage::logException($e);
         }
 
-        return $this;
-    }
-
-    /**
-     * @param Varien_Event_Observer $observer
-     * @return $this
-     */
-    public function salesOrderPaymentCapture(Varien_Event_Observer $observer)
-    {
-        /** @var Mage_Sales_Model_Order_Payment $payment */
-        $payment = $observer->getEvent()->getPayment();
-        $methodCode = $payment->getMethod();
-        if ($methodCode == 'paggi_cc') {
-            /** @var Mage_Sales_Model_Order_Invoice $invoice */
-            $invoice = $observer->getEvent()->getInvoice();
-            $invoice->setTransactionId($payment->getAdditionalInformation('transaction_id'));
-        }
         return $this;
     }
 
@@ -158,26 +87,12 @@ class Paggi_Payment_Model_Observer extends Varien_Event_Observer
             if ($methodCode == 'paggi_cc') {
                 $cancelled = $payment->getAdditionalInformation('cancelled');
                 if (!$cancelled) {
-                    $captured = $payment->getAdditionalInformation('captured');
+
                     $paggiOrderId = $payment->getAdditionalInformation('order_id');
-                    $transactionId = $payment->getAdditionalInformation('transaction_id');
-                    if ($captured) {
-                        $amount = ($order->getBaseTotalInvoiced()) ? $order->getBaseTotalInvoiced() : $order->getBaseGrandTotal();
-
-                        $capturedDate = $payment->getAdditionalInformation('captured_date');
-                        $currentDate = new DateTime();
-                        $currentDate = $currentDate->format('Y-m-d');
-
-                        if ($captured && $capturedDate == $currentDate) {
-                            $this->_getHelper()->getApi()->void($order, $paggiOrderId);
-                        } else {
-                            $this->_getHelper()->getApi()->refund($order, $paggiOrderId, $amount);
-                        }
-                    } else {
-                        $this->_getHelper()->getApi()->void($order, $transactionId);
-                    }
+                    $this->getHelper()->getApi()->refund($order, $paggiOrderId);
 
                     $payment->setAdditionalInformation('cancelled', true);
+                    $payment->setAdditionalInformation('cancelled_date', Mage::getSingleton('core/date')->gmtDate());
                     $payment->save();
                 }
             }
@@ -193,13 +108,13 @@ class Paggi_Payment_Model_Observer extends Varien_Event_Observer
     /**
      * @return Paggi_Payment_Helper_Data|Mage_Core_Helper_Abstract
      */
-    protected function _getHelper()
+    protected function getHelper()
     {
-        if (!$this->_helper) {
-            $this->_helper = Mage::helper('paggi');
+        if (!$this->helper) {
+            $this->helper = Mage::helper('paggi');
         }
 
-        return $this->_helper;
+        return $this->helper;
     }
 
     /**
@@ -207,10 +122,10 @@ class Paggi_Payment_Model_Observer extends Varien_Event_Observer
      */
     protected function getOrderHelper()
     {
-        if (!$this->_helperOrder) {
-            $this->_helperOrder = Mage::helper('paggi/order');
+        if (!$this->helperOrder) {
+            $this->helperOrder = Mage::helper('paggi/order');
         }
 
-        return $this->_helperOrder;
+        return $this->helperOrder;
     }
 }

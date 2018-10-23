@@ -19,11 +19,8 @@
  */
 class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
 {
-    protected $_paggi;
-    protected $_helper;
-    protected $_customerHelper;
-    protected $_orderHelper;
-    protected $_paymentHelper;
+    protected $paggi;
+    protected $helper;
 
     /**
      * Paggi lib Object
@@ -31,13 +28,12 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
      */
     public function getService()
     {
-        if (!$this->_paggi) {
-            /** @var Paggi_Payment_Model_Service_Order _paggi */
-            $this->_paggi = Mage::getModel('paggi/service_order');
+        if (!$this->paggi) {
+            /** @var Paggi_Payment_Model_Service_Order paggi */
+            $this->paggi = Mage::getModel('paggi/service_order');
         }
 
-        return $this->_paggi;
-
+        return $this->paggi;
     }
 
     /**
@@ -87,16 +83,14 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
 
         $ccInstallments = $payment->getAdditionalInformation('cc_installments');
 
-        if ($payment->getAdditionalInformation('cc_total_with_interest') > 0) {
-            $amount = number_format($payment->getAdditionalInformation('cc_total_with_interest'), 2, '.', '');
-        }
+        $taxVat = $this->getHelper()->digits($payment->getAdditionalInformation('cpf_cnpj'));
 
         $token = $payment->getAdditionalInformation('cc_token');
-        $amount = number_format($amount, 2, '.', '');
+        $amount = $amount * 100;
         $ccCid = Mage::registry('paggi_cc_cid');
 
         $charge = new stdClass();
-        $charge->amount = (int) $amount * 100;
+        $charge->amount = (int) $amount;
         $charge->installments = $ccInstallments;
 
         if ($token) {
@@ -118,6 +112,7 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
             $charge->card->holder = $ccOwner;
             $charge->card->year = $ccExpYear;
             $charge->card->month = $ccExpMonth;
+            $charge->card->document = $taxVat;
 
             $ccSaveCard = $payment->getAdditionalInformation('cc_save_card');
             if ($ccSaveCard) {
@@ -131,7 +126,7 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
         $customer = new stdClass();
         $customer->name = $order->getCustomerFirstname() . ' ' . $order->getCustomerLastname();
         $customer->email = $order->getCustomerEmail();
-        $customer->document = $this->getHelper()->digits($payment->getAdditionalInformation('cpf_cnpj'));
+        $customer->document = $order->getCustomerTaxvat() ? $order->getCustomerTaxvat() : $taxVat;
 
         if (!$this->getHelper()->getConfigData('show_taxvat_field')) {
             $customer->document = $this->getHelper()->getTaxvatValue();
@@ -139,6 +134,7 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
 
         $paggiOrder->capture = $this->getHelper()->getConfig('capture', $code) ? true : false;
         $paggiOrder->external_identifier = $orderId;
+        $paggiOrder->ip = $order->getRemoteIp() ? $order->getRemoteIp() : Paggi_Payment_Helper_Data::DEFAULT_IP;
         $paggiOrder->charges = $charges;
         $paggiOrder->customer = $customer;
 
@@ -153,191 +149,6 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
             Mage::throwException($this->getHelper()->__('There was an error') . ': ' . $response->getMessage());
         }
         return $response;
-    }
-
-    /**
-     * @param Paggi_Payment_Model_Method_Cc $method
-     * @param Mage_Payment_Model_Info $paymentInfo
-     * @param float $amount
-     * @return object|boolean
-     */
-    public function recurringMethod(Paggi_Payment_Model_Method_Cc $method, $profile, $paymentInfo, $action = 'new')
-    {
-        try {
-            $quote = $profile->getQuote();
-
-            $code = $method->getCode();
-            $softDescriptor = $this->getHelper()->getConfig('soft_descriptor', $code);
-
-            $response = null;
-
-            //Order Data
-            $referenceNum = $profile->getData('internal_reference_id');
-            $currencyCode = Mage::app()->getStore()->getCurrentCurrencyCode();
-
-            $ccCid = Mage::registry('paggi_cc_cid');
-
-            $ipAddress = $this->getIpAddress();
-
-            $amount = number_format($profile->getTaxAmount() + $profile->getBillingAmount() + $profile->getShippingAmount(), 2, '.', '');
-
-            $cpfCnpj = $paymentInfo->getAdditionalInformation('cpf_cnpj');
-
-            $ccNumber = $paymentInfo->decrypt($paymentInfo->getCcNumberEnc());
-            $ccExpMonth = str_pad($paymentInfo->getCcExpMonth(), 2, '0', STR_PAD_LEFT);
-            $ccExpYear = $paymentInfo->getCcExpYear();
-
-            $startDate = date('Y-m-d');
-            if ($profile->getData('start_datetime')) {
-                $startDate = date('Y-m-d', strtotime($profile->getData('start_datetime')));
-            }
-
-            $frequency = $profile->getData('period_frequency');
-            $failureThreshold = $profile->getData('suspension_threshold');
-            $installments = $profile->getData('period_max_cycles');
-            if (!$installments) {
-                $installments = '1';
-            }
-
-            $period = 'monthly';
-            switch($profile->getData('period_unit')){
-                case 'day':
-                    $period = 'daily';
-                    break;
-                case 'week':
-                    $period = 'weekly';
-                    break;
-                case 'month':
-                    $period = 'monthly';
-                    break;
-            }
-
-            $data = array(
-                'referenceNum' => $referenceNum, //Profile reference NUM
-                'processorID' => $processorID, //Processor
-                'ipAddress' => $ipAddress,
-                'customerIdExt' => $cpfCnpj,
-                //'fraudCheck' => $fraudCheck,
-                'number' => $ccNumber,
-                'expMonth' => $ccExpMonth,
-                'expYear' => $ccExpYear,
-                'cvvNumber' => $ccCid,
-                'currencyCode' => $currencyCode,
-                'chargeTotal' => $amount,
-                'softDescriptor' => $softDescriptor,
-                'action' => $action,
-                //Recurring data
-                'startDate' => $startDate,
-                'frequency' => $frequency,
-                'period' => $period,
-                'installments' => $installments,
-                'failureThreshold' => $failureThreshold
-            );
-
-            if ($profile->getInitAmount()) {
-                if ($startDate == date('Y-m-d')) {
-                    $data['startDate'] = date('Y-m-d', strtotime($startDate . ' +1 day'));
-                }
-                $data['firstAmount'] = number_format($profile->getInitAmount(), 2, '.', '');
-            }
-
-            $billingData = $this->getCustomerHelper()->getAddressData($quote, $paymentInfo);
-            $shippingData = $this->getCustomerHelper()->getAddressData($quote, $paymentInfo, 'shipping');
-
-            $data = array_merge($data, $billingData, $shippingData);
-
-            $this->getService()->createRecurring($data);
-            $response = $this->getService()->response;
-
-            $this->getHelper()->log($this->getService()->xmlRequest);
-            $this->getHelper()->log($this->getService()->xmlResponse);
-
-            $this->getHelper()->saveTransaction('recurring_payment', $data, $response, $referenceNum);
-
-            if (
-                (isset($response['errorMessage']) && $response['errorMessage'])
-                ||
-                (isset($response['errorMsg']) && $response['errorMsg'])
-            ) {
-                $error = isset($response['errorMessage']) ? $response['errorMessage'] : $response['errorMsg'];
-                Mage::throwException($error);
-            }
-
-
-            return $response;
-
-        } catch (Exception $e) {
-            Mage::logException($e);
-        }
-
-        return false;
-    }
-
-    /**
-     * @param Mage_Payment_Model_Recurring_Profile $profile
-     * @return boolean
-     */
-    public function cancelRecurring(Mage_Payment_Model_Recurring_Profile $profile)
-    {
-        try {
-            $data = array(
-                'command' => 'cancel-recurring',
-                'orderID' =>  $profile->getData('reference_id')
-            );
-
-            $this->getService()->cancelRecurring($data);
-            $response = $this->getService()->response;
-
-            $this->getHelper()->log($this->getService()->xmlRequest);
-            $this->getHelper()->log($this->getService()->xmlResponse);
-
-            if (
-                (isset($response['errorMessage']) && $response['errorMessage'])
-                ||
-                (isset($response['errorMsg']) && $response['errorMsg'])
-            ) {
-                $error = isset($response['errorMessage']) ? $response['errorMessage'] : $response['errorMsg'];
-                Mage::throwException($error);
-            }
-
-            $this->getHelper()->saveTransaction('cancel_recurring', $data, $response);
-        } catch (Exception $e) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public function updateRecurring($profile, $flagActive)
-    {
-        try {
-            $data = array(
-                'command' => 'modify-recurring',
-                'orderID' =>  $profile->getData('reference_id'),
-                'action' =>  (!$flagActive) ? 'disable' : 'enable'
-            );
-
-            $this->getService()->cancelRecurring($data);
-            $response = $this->getService()->response;
-
-            $this->getHelper()->log($this->getService()->xmlRequest);
-            $this->getHelper()->log($this->getService()->xmlResponse);
-
-            if (
-                (isset($response['errorMessage']) && $response['errorMessage'])
-                ||
-                (isset($response['errorMsg']) && $response['errorMsg'])
-            ) {
-                $error = isset($response['errorMessage']) ? $response['errorMessage'] : $response['errorMsg'];
-                Mage::throwException($error);
-            }
-
-            $this->getHelper()->saveTransaction('cancel_recurring', $data, $response);
-        } catch (Exception $e) {
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -386,7 +197,6 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
 
                 if (property_exists($responseData, 'id')) {
                     $token = $responseData->id;
-                    $description = $responseData->masked_number;
 
                     /** @var Paggi_Payment_Model_Card $card */
                     $card = Mage::getModel('paggi/card');
@@ -445,12 +255,40 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
      * @param $amount
      * @return stdClass
      */
+    public function getOrder($order, $paggiOrderId)
+    {
+        $error = $this->getHelper()->__('Error getting order %s', $order->getIncrementId());
+
+        $endpoint = $this->getHelper()->getEndpoint('get_order', $paggiOrderId);
+        $response = $this->getService()->doGetRequest($endpoint);
+
+        if ($response) {
+
+            $responseData = Mage::helper('core')->jsonDecode($response->getBody(), false);
+
+            if (!property_exists($responseData, 'id')) {
+                Mage::throwException($error);
+            }
+
+        } else {
+            Mage::throwException($error);
+        }
+
+        return $responseData;
+    }
+
+    /**
+     * @param Mage_Sales_Model_Order $order
+     * @param string $paggiOrderId
+     * @param $amount
+     * @return stdClass
+     */
     public function refund($order, $paggiOrderId)
     {
         $error = $this->getHelper()->__('Error voiding order %s', $order->getIncrementId());
         $endpoint = $this->getHelper()->getEndpoint('void', $paggiOrderId);
 
-        $response = $this->getService()->doPostRequest($endpoint);
+        $response = $this->getService()->doPutRequest($endpoint);
 
         if ($response) {
             $responseData = Mage::helper('core')->jsonDecode($response->getBody(), false);
@@ -469,129 +307,15 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
     }
 
     /**
-     * @param Mage_Sales_Model_Order $order
-     * @param boolean $transactionId
-     * @return array|false
-     */
-    public function checkOrders(Mage_Sales_Model_Order $order, $transactionId = false, $logFile = false)
-    {
-        try {
-            /** @var Mage_Sales_Model_Order_Payment $payment */
-            $payment = $order->getPayment();
-            if ($order->getPayment()->getMethod() == 'paggi_checkout2') {
-                $data = array(
-                    "payOrderId" => $payment->getAdditionalInformation('pay_order_id'),
-                );
-                $this->getService()->pullPaymentOrder($data);
-            } else {
-                if ($transactionId) {
-                    $data = array(
-                        "transactionID" => $payment->getAdditionalInformation('transaction_id'),
-                    );
-                } else {
-                    $data = array(
-                        "orderID" => $payment->getAdditionalInformation('order_id'),
-                    );
-                }
-                $this->getService()->pullReport($data);
-            }
-
-            $response = $this->getService()->response;
-
-            if ($logFile) {
-                $this->getHelper()->log($this->getService()->xmlRequest, $logFile);
-                $this->getHelper()->log($this->getService()->xmlResponse, $logFile);
-            }
-
-            return $response;
-
-        } catch (Exception $e) {
-            Mage::logException($e);
-        }
-
-        return false;
-    }
-
-    /**
-     * @param string $orderId
-     * @param string $pageToken
-     * @param string $pageNumber
-     * @return array|false
-     */
-    public function pullReportByOrderId($orderId, $pageToken = null, $pageNumber = null)
-    {
-        try {
-            $data = array(
-                "orderID" =>$orderId,
-            );
-
-            if ($pageToken) {
-                $data['pageToken'] = $pageToken;
-            }
-
-            if ($pageNumber) {
-                $data['pageNumber'] = $pageNumber;
-            }
-            $this->getService()->pullReport($data);
-            $response = $this->getService()->response;
-            return $response;
-
-        } catch (Exception $e) {
-            Mage::logException($e);
-        }
-
-        return false;
-    }
-
-    /**
      * @return Paggi_Payment_Helper_Data|Mage_Core_Helper_Abstract
      */
     public function getHelper()
     {
-        if (!$this->_helper) {
-            /** @var Paggi_Payment_Helper_Data _helper */
-            $this->_helper = Mage::helper('paggi');
+        if (!$this->helper) {
+            /** @var Paggi_Payment_Helper_Data helper */
+            $this->helper = Mage::helper('paggi');
         }
 
-        return $this->_helper;
-    }
-
-    /**
-     * @return Paggi_Payment_Helper_Customer|Mage_Core_Helper_Abstract
-     */
-    public function getCustomerHelper()
-    {
-        if (!$this->_customerHelper) {
-            /** @var Paggi_Payment_Helper_Customer _customerHelper */
-            $this->_customerHelper = Mage::helper('paggi/customer');
-        }
-
-        return $this->_customerHelper;
-    }
-
-    /**
-     * @return Paggi_Payment_Helper_Order|Mage_Core_Helper_Abstract
-     */
-    public function getOrderHelper()
-    {
-        if (!$this->_orderHelper) {
-            /** @var Paggi_Payment_Helper_Order _orderHelper */
-            $this->_orderHelper = Mage::helper('paggi/order');
-        }
-
-        return $this->_orderHelper;
-    }
-
-    /**
-     * @return Paggi_Payment_Helper_Customer|Mage_Core_Helper_Abstract
-     */
-    public function getPaymentHelper()
-    {
-        if (!$this->_paymentHelper) {
-            /** @var Paggi_Payment_Helper_Payment _paymentHelper */
-            $this->_paymentHelper = Mage::helper('paggi/payment');
-        }
-
-        return $this->_paymentHelper;
+        return $this->helper;
     }
 }

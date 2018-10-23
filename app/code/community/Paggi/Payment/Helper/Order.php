@@ -20,7 +20,7 @@
  */
 class Paggi_Payment_Helper_Order extends Mage_Core_Helper_Data
 {
-    protected $_helper;
+    protected $helper;
 
     /**
      * @param Mage_Sales_Model_Order $order
@@ -28,8 +28,9 @@ class Paggi_Payment_Helper_Order extends Mage_Core_Helper_Data
      */
     public function createInvoice(Mage_Sales_Model_Order $order, $transactionId = null, $code = 'paggi_cc')
     {
-        $helper = $this->_getHelper();
+        $helper = $this->getHelper();
         if ($order->canInvoice()) {
+
             /** @var Mage_Sales_Model_Order_Payment $payment */
             $payment = $order->getPayment();
             if (!$transactionId) {
@@ -49,7 +50,7 @@ class Paggi_Payment_Helper_Order extends Mage_Core_Helper_Data
             $invoice->setCanVoidFlag(true);
 
             $payment->setAdditionalInformation('captured', true);
-            $payment->setAdditionalInformation('captured_date', date('Y-m-d'));
+            $payment->setAdditionalInformation('captured_date', Mage::getSingleton('core/date')->gmtDate());
 
             $transactionSave = Mage::getModel('core/resource_transaction')
                 ->addObject($invoice)
@@ -59,7 +60,7 @@ class Paggi_Payment_Helper_Order extends Mage_Core_Helper_Data
 
             $helper->log('Order: ' . $order->getIncrementId() . " - invoice created");
 
-            $status = $this->_getHelper()->getConfig('captured_order_status', $code);
+            $status = $this->getHelper()->getConfig('captured_order_status', $code);
             if ($status) {
                 $message = Mage::helper('paggi')->__('The payment was confirmed - Transaction ID: %s', (string)$transactionId);
                 $order->addStatusHistoryComment($message, $status)->setIsCustomerNotified(true);
@@ -74,7 +75,7 @@ class Paggi_Payment_Helper_Order extends Mage_Core_Helper_Data
      * @param Mage_Sales_Model_Order $order
      * @param null $transactionId
      */
-    public function cancelOrder(Mage_Sales_Model_Order $order, $transactionId = null)
+    public function cancelOrder(Mage_Sales_Model_Order $order)
     {
         /** @var Mage_Sales_Model_Order_Payment $payment */
         $payment = $order->getPayment();
@@ -135,242 +136,74 @@ class Paggi_Payment_Helper_Order extends Mage_Core_Helper_Data
             $transaction->save();
         }
 
-
         $payment->save();
 
     }
 
     /**
      * @param Mage_Sales_Model_Order $order
-     * @param array $record
+     * @param stdClass $record
+     * @return string
      */
-    public function updatePayment($order, $record)
+    public function updatePayment($order, $response)
     {
-        $helper = $this->_getHelper();
-        $state = isset($record['transactionState']) ? $record['transactionState'] : null;
-        $transactionId = isset($record['transactionId']) ? $record['transactionId'] : null;
-        $amount = isset($record['transactionAmount']) ? $record['transactionAmount'] : null;
+        $helper = $this->getHelper();
+        $message = $helper->__('Order synchronized with status <strong>%s</strong>', $response->status);
 
-        $message = $helper->__('No updates available');
+        try {
+            if (property_exists($response, 'status')) {
+                $payment = $order->getPayment();
+                $currentStatus = $payment->getAdditionalInformation('status');
 
-        if ($state) {
-
-            $lastTransactionState = $order->getPayment()->getAdditionalInformation('last_transaction_state');
-            if ($lastTransactionState != $state) {
-                if (
-                    $state == $helper->getTransactionState('paid')
-                    || $state == $helper->getTransactionState('captured')
-                    || $state == $helper->getTransactionState('boleto_overpaid')
-                ) {
-
-                    $this->createInvoice($order, $transactionId);
-                    if ($state == $helper->getTransactionState('boleto_overpaid')) {
-                        $transactionStatus = $helper->getTransactionStateLabel($state);
-                        $message = $helper->__('Order synchronized with status <strong>%s</strong>', $transactionStatus);
-                    } else {
-                        $message = $helper->__('Order approved, TID %s', $transactionId);
+                if ($currentStatus != $response->status) {
+                    if ($response->status == 'captured') {
+                        $this->createInvoice($order);
+                        $message = $helper->__('Order approved');
+                    } else if ($response->status == 'cancelled') {
+                        $this->cancelOrder($order);
+                        $message = $helper->__('Order cancelled');
                     }
-
-                } else if (
-                    $state == $helper->getTransactionState('fraud_declined')
-                    || $state == $helper->getTransactionState('declined')
-                    || $state == $helper->getTransactionState('voided')
-                ) {
-
-                    $this->cancelOrder($order, $transactionId);
-                    $message = $helper->__('Order cancelled, TID %s', $transactionId);
-
-                } else {
-
-                    $transactionStatus = $helper->getTransactionStateLabel($state);
-                    $message = $helper->__('Order synchronized with status <strong>%s</strong>', $transactionStatus);
-
+                    $payment->setAdditionalInformation('status', $response->status);
+                    $payment->save();
                 }
 
-                if ($message) {
-                    $order->addStatusHistoryComment($message);
-                    $order->save();
-                }
-
-                $order->getPayment()->setAdditionalInformation('last_transaction_state', $state);
-                $order->getPayment()->save();
             }
-
+        } catch (Exception $e) {
+            Mage::logException($e);
         }
 
-        Mage::getSingleton('adminhtml/session')->addNotice($message);
-
+        return $message;
     }
 
     /**
-     * @param Mage_Sales_Model_Recurring_Profile $profile
-     * @param $record
+     * Get the assigned state of an order status
+     *
+     * @param string order_status
+     * @return string
      */
-    public function updateRecurringProfile(Mage_Payment_Model_Recurring_Profile $profile, $record)
+    public function getAssignedState($status)
     {
-        $orderIds = $profile->getResource()->getChildOrderIds($profile);
+        /** @var Mage_Sales_Model_Resource_Order_Status_Collection $item */
+        $item = Mage::getResourceModel('sales/order_status_collection')
+            ->joinStates()
+            ->addFieldToFilter('main_table.status', $status);
 
-        $maxCycles = $profile->getIniAmount() ? $profile->getPeriodMaxCycles() : $profile->getPeriodMaxCycles() + 1;
-        if (count($orderIds) >= $maxCycles) {
-            return;
-        }
+        /** @var Mage_Sales_Model_Order_Status $status */
+        $status = $item->getFirstItem();
 
-        $collection = Mage::getModel('sales/order')->getCollection()
-            ->join(
-                array('payment' => 'sales/order_payment'),
-                'main_table.entity_id = payment.parent_id',
-                array('payment.paggi_transaction_id')
-            )
-            ->addAttributeToFilter('main_table.entity_id', array('in' => $orderIds));
-
-        $collection->getSelect()
-            ->reset(Zend_Db_Select::COLUMNS)
-            ->columns('payment.paggi_transaction_id');
-
-        $result = $collection->toArray();
-
-        $tranIds = array();
-        if ($result && $result['totalRecords'] > 0) {
-            foreach ($result['items'] as $item) {
-                $tranIds[] = $item['paggi_transaction_id'];
-            }
-        }
-
-        if (!in_array($record['transactionId'], $tranIds)) {
-            $this->activateRecurringProfile($profile, $record);
-        }
-
-        if (count($tranIds) >= $maxCycles) {
-            $profile->setState(Mage_Sales_Model_Recurring_Profile::STATE_SUSPENDED);
-            $profile->save();
-        }
-    }
-
-    /**
-     * @param Mage_Sales_Model_Recurring_Profile $profile
-     * @param $response
-     */
-    public function activateRecurringProfile(Mage_Payment_Model_Recurring_Profile $profile, $record)
-    {
-        $tid = $record['transactionId'];
-
-        $productItemInfo = new Varien_Object();
-        $productItemInfo->setPaymentType(Mage_Sales_Model_Recurring_Profile::PAYMENT_TYPE_REGULAR);
-        $productItemInfo->setPrice((string)$record['transactionAmount']);
-        $productItemInfo->setShippingAmount(0);
-        $productItemInfo->setTaxAmount(0);
-
-        $productItemInfo = new Varien_Object();
-        $productItemInfo->setData($profile->getOrderItemInfo());
-        $productItemInfo->setPaymentType(Mage_Sales_Model_Recurring_Profile::PAYMENT_TYPE_REGULAR);
-        $order = $profile->createOrder($productItemInfo);
-        $order->save();
-
-        if ($order->getId()) {
-            $profile->addOrderRelation($order->getId());
-
-            /** @var Mage_Sales_Model_Order_Payment $payment */
-            $payment = $order->getPayment();
-
-            $additionalInfo = $profile->getAdditionalInfo();
-            if (is_string($additionalInfo)) {
-                $additionalInfo = unserialize($additionalInfo);
-            }
-
-            $payment->setCcType($additionalInfo['cc_type']);
-            $payment->setCcOwner($additionalInfo['cc_type']);
-            $payment->setCcExpMonth($additionalInfo['cc_type']);
-            $payment->setCcExpYear($additionalInfo['cc_type']);
-            $payment->setCcNumberEnc($additionalInfo['cc_type']);
-            $payment->setCcLast4($additionalInfo['cc_type']);
-
-            $cpfCnpj = $additionalInfo['cpf_cnpj'];
-            $payment->setAdditionalInformation('cpf_cnpj', $cpfCnpj);
-
-            $payment->setAdditionalInformation('recurring_profile', true);
-            $payment->setIsTransactionClosed(1);
-
-            $this->createInvoice($order, $tid);
-        }
-
-    }
-
-    /**
-     * @param $profile
-     * @param $paymentInfo
-     * @param $order
-     * @param $response
-     */
-    public function setOrderPaymentData($profile, $paymentInfo, $order, $response)
-    {
-        $tid = $response['transactionID'];
-
-        $cpfCnpj = $paymentInfo->getAdditionalInformation('cpf_cnpj');
-        $installments = $paymentInfo->getAdditionalInformation('cc_installments');
-
-        $additionalInfo = array(
-            'cc_type' => $paymentInfo->getCcType(),
-            'cc_owner' => $paymentInfo->getCcOwner(),
-            'cc_exp_month' => $paymentInfo->getCcExpMonth(),
-            'cc_exp_year' => $paymentInfo->getCcExpYear(),
-            'cc_number_enc' => $paymentInfo->getCcNumberEnc(),
-            'cc_last4' => $paymentInfo->getCcLast4(),
-            'cpf_cnpj' => $cpfCnpj,
-            'installments' => $installments,
-        );
-
-        /** @var Mage_Sales_Model_Order_Payment $payment */
-        $payment = $order->getPayment();
-
-        $payment->setCcTransId($tid);
-
-        $payment->setCcType($paymentInfo->getCcType());
-        $payment->setCcOwner($paymentInfo->getCcOwner());
-        $payment->setCcExpMonth($paymentInfo->getCcExpMonth());
-        $payment->setCcExpYear($paymentInfo->getCcExpYear());
-        $payment->setCcNumberEnc($paymentInfo->getCcNumberEnc());
-        $payment->setCcLast4($paymentInfo->getCcLast4());
-
-        $payment->setAdditionalInformation('cpf_cnpj', $cpfCnpj);
-        $payment->setAdditionalInformation('cc_installments', $installments);
-
-        $payment->setAdditionalInformation('recurring_profile', true);
-        $payment->setCcInstallments($installments);
-        $payment->setIsTransactionClosed(1);
-
-        $this->createInvoice($order, $tid);
-
-        $profile->setAdditionalInfo(serialize($additionalInfo));
-
-    }
-
-    public function getSellerByProductId($productId)
-    {
-        /** @var Mage_Catalog_Model_Product $product */
-        $product = Mage::getModel('catalog/product')->load($productId);
-
-        if ($product->getData('paggi_seller')) {
-
-            /** @var Paggi_Payment_Model_Seller $seller */
-            $seller = Mage::getModel('paggi/seller')->load($product->getData('paggi_seller'), 'seller_id');
-
-            if ($seller && $seller->getId())
-                return $seller;
-        }
-
-        return false;
+        return $status->getState();
     }
 
     /**
      * @return Paggi_Payment_Helper_Data|Mage_Core_Helper_Abstract
      */
-    protected function _getHelper()
+    protected function getHelper()
     {
-        if (!$this->_helper) {
-            $this->_helper = Mage::helper('paggi');
+        if (!$this->helper) {
+            $this->helper = Mage::helper('paggi');
         }
 
-        return $this->_helper;
+        return $this->helper;
     }
 
 }

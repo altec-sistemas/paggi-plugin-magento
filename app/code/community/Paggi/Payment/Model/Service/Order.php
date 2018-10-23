@@ -92,11 +92,12 @@ class Paggi_Payment_Model_Service_Order
     private function doRequest($params)
     {
         $method = null;
+        $token = $this->getHelper()->getConfig('token');
 
         $this->getHttpClient()->resetParameters(true);
         $this->getHttpClient()->setHeaders('Content-Type', 'application/json');
         $this->getHttpClient()->setHeaders('Accept', 'application/json;charset=UTF8');
-        //$this->getHttpClient()->setHeaders('Authorization', 'Bearer ' . $token);
+        $this->getHttpClient()->setHeaders('Authorization', 'Bearer ' . $token);
 
         $path = "";
 

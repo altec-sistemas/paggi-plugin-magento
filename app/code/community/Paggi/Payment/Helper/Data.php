@@ -21,6 +21,7 @@
 class Paggi_Payment_Helper_Data extends Mage_Core_Helper_Data
 {
     const LOG_FILE = 'paggi.log';
+    const DEFAULT_IP = '127.0.0.1';
 
     protected $_api = null;
 
@@ -75,11 +76,25 @@ class Paggi_Payment_Helper_Data extends Mage_Core_Helper_Data
         ),
     );
 
-    public function getMethodsEnabled()
+    public function getMethodsEnabled($path = 'paggi_cc')
     {
         /** @var Paggi_Payment_Model_Source_Cctype $methods */
         $methods = Mage::getModel('paggi/source_cctype');
-        return $methods->toOptionArray();
+        $allMethods = $methods->toOptionArray();
+        $allowedMethods = ($allMethods) ? $allMethods  : array(
+        );
+        $allowedBrands = explode(',', $this->getConfig('allowed_brands', $path));
+        $i = 0;
+        foreach ($allMethods as $method) {
+
+            if (!$method['value'] || !in_array($method['value'], $allowedBrands)) {
+                unset($allowedMethods[$i]);
+            }
+            $i++;
+
+        }
+
+        return $allowedMethods;
     }
 
     public function getInterestMethods()
@@ -159,6 +174,34 @@ class Paggi_Payment_Helper_Data extends Mage_Core_Helper_Data
     public function saveTransaction($request, $response, $orderId = null)
     {
         try {
+
+            //Mask sensible data
+            if (property_exists($request, 'charges') && is_array($request->charges)) {
+                $i = 0;
+                foreach ($request->charges as $charge) {
+                    if (property_exists($charge, 'card')) {
+
+                        if (property_exists($charge->card, 'number')) {
+                            $ccNumber = substr($charge->card->number, 0, 6) . 'XXXXXX' . substr($charge->card->number, -4, 4);
+                            $request->charges[$i]->card->number = $ccNumber;
+                        }
+
+                        if (property_exists($charge->card, 'cvc')) {
+                            $cvc = 'XXX';
+                            $request->charges[$i]->card->cvc = $cvc;
+                        }
+
+                        if (property_exists($charge->card, 'token')) {
+                            $token = 'XXXXXXXXX';
+                            $request->charges[$i]->card->token = $token;
+                        }
+
+                    }
+                    $i++;
+                }
+            }
+
+
             $paggiOrderId = null;
             if (is_object($request) || is_array($request)) {
                 $request = json_encode($request);
@@ -205,7 +248,7 @@ class Paggi_Payment_Helper_Data extends Mage_Core_Helper_Data
     public function getSavedCard($entity_id)
     {
         /** @var Paggi_Payment_Model_Card $creditCard */
-        $creditCard = Mage::getModel('paggi/card')->load($entity_id);;
+        $creditCard = Mage::getModel('paggi/card')->load($entity_id);
         return $creditCard;
     }
 

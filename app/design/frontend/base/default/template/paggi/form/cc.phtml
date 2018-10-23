@@ -73,7 +73,7 @@ $baseGrandTotal = $quote->getBaseGrandTotal();
                                     <?php foreach ($_savedCards as $card) : ?>
                                         <option value="<?php echo $card->getId() ?>"
                                                 data-brand="<?php echo strtolower($card->getBrand()) ?>">
-                                            <?php echo $card->getDescription() . " (" . $helper->getBrand($card->getBrand()) . ")" ?>
+                                            <?php echo $card->getDescription();?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>

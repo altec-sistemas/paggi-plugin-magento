@@ -22,7 +22,7 @@
 <config>
     <modules>
         <Paggi_Payment>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </Paggi_Payment>
     </modules>
 
@@ -80,15 +80,6 @@
         </helpers>
 
         <events>
-            <sales_order_payment_capture>
-                <observers>
-                    <paggi_capture>
-                        <type>singleton</type>
-                        <class>paggi/observer</class>
-                        <method>salesOrderPaymentCapture</method>
-                    </paggi_capture>
-                </observers>
-            </sales_order_payment_capture>
             <sales_order_payment_cancel>
                 <observers>
                     <paggi_cancel>
@@ -107,15 +98,6 @@
                     </paggi_payment_place_end>
                 </observers>
             </sales_order_payment_place_end>
-            <!--<sales_order_place_after>-->
-                <!--<observers>-->
-                    <!--<paggi_sales_order_place_after>-->
-                        <!--<type>singleton</type>-->
-                        <!--<class>paggi/observer</class>-->
-                        <!--<method>salesOrderPlaceAfter</method>-->
-                    <!--</paggi_sales_order_place_after>-->
-                <!--</observers>-->
-            <!--</sales_order_place_after>-->
         </events>
 
         <sales>
@@ -244,6 +226,7 @@
         <paggi>
             <endpoints>
                 <order>partners/{{partner_id}}/orders</order>
+                <get_order>partners/{{partner_id}}/orders/{{order_id}}</get_order>
                 <capture>partners/{{partner_id}}/orders/{{order_id}}/capture</capture>
                 <void>partners/{{partner_id}}/orders/{{order_id}}/void</void>
                 <cards>partners/{{partner_id}}/cards</cards>

@@ -4,11 +4,13 @@
 /** @var Mage_Sales_Model_Order $order */
 $orderId = $this->getOrderId();
 $order = Mage::getModel('sales/order')->load($orderId);
+$payment = $order->getPayment();
+$paggiOrderId = $payment->getAdditionalInformation('order_id');
 
-/** @var MaxiPago_Payment_Helper_Data $helper */
-$helper = Mage::helper('maxipago');
+/** @var Paggi_Payment_Helper_Data $helper */
+$helper = Mage::helper('paggi');
 
-$response = $helper->getApi()->pullReport($order);
+$response = $helper->getApi()->getOrder($order, $paggiOrderId);
 ?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php echo $this->getLang() ?>" lang="<?php echo $this->getLang() ?>">
@@ -43,80 +45,46 @@ $response = $helper->getApi()->pullReport($order);
             background: #fefefe;
             border: 1px solid #dedede;
         }
-        .off {
-            display: none;
-        }
-        .on {
-            display: block;
-        }
     </style>
-    <script>
-
-        function openTransaction(tId) {
-            var visibility =  document.getElementById('transaction-' + tId).style.display;
-            if (visibility == 'block') {
-                document.getElementById('transaction-' + tId).style.display = 'none';
-            } else {
-                var els = document.querySelectorAll('.transactions');
-                els.forEach(function (item, index) {
-                    item.style.display = 'none';
-                });
-                document.getElementById('transaction-' + tId).style.display = 'block';
-            }
-        }
-    </script>
 </head>
 <body id="html-body" style="background:#fff;">
-    <div id="preview" class="cms-revision-preview">
-        <?php if (isset($response['records'])): ?>
-            <ul>
-                <?php
-                $total = count($response['records']);
-                foreach ($response['records'] as $i => $record):?>
-                    <li>
-                        <h3>
-                            <?php $tId = (isset($record['transactionId'])) ? $record['transactionId'] : null;; ?>
-                            <?php echo $helper->__('Transaction %s', $tId); ?>
-                            <a href="javascript:void(0);" onclick="openTransaction(<?php echo $i; ?>)">
-                                (<?php echo $helper->__('Exibir'); ?>)
-                            </a>
-                        </h3>
-                        <dl class="transactions off" id="transaction-<?php echo $i; ?>">
-                            <?php foreach ($record as $key => $value):?>
-                                <?php if ($value): ?>
-                                    <dt><?php echo $key; ?></dt>
-                                    <dd><?php echo $value; ?></dd>
-                                <?php endif;?>
-                            <?php endforeach; ?>
-                        </dl>
-                    </li>
+<div id="preview" class="cms-revision-preview">
+    <?php if (property_exists($response, 'status')): ?>
+        <dl>
+            <dt><?php echo $this->__('ID'); ?></dt>
+            <dd><?php echo $this->__($response->id); ?></dd>
+
+            <dt><?php echo $this->__('Status'); ?></dt>
+            <dd><?php echo $this->__($response->status); ?></dd>
+            <?php if (property_exists($response, 'customer')): ?>
+                <dt><?php echo $this->__('Customer'); ?></dt>
+                <dd><?php echo $response->customer->name . ' (' . $response->customer->email . ')'; ?></dd>
+            <?php endif; ?>
+            <?php
+            if (property_exists($response, 'charges')):
+                foreach ($response->charges as $charge):?>
+                    <?php foreach ($charge as $key => $value): ?>
+                        <dt>
+                            <?php echo $this->__($key); ?>
+                        </dt>
+                        <dd>
+                            <?php if ($key == 'statuses' && is_array($value)): ?>
+                                <ul class="transactions">
+                                    <?php foreach ($value as $status): ?>
+                                        <?php if ($status): ?>
+                                            <li><?php echo $this->__($status->type); ?>: <?php echo $status->inserted_at; ?></li>
+                                        <?php endif;?>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php else: ?>
+                                <?php echo $this->__($value); ?>
+                            <?php endif; ?>
+                        </dd>
+                    <?php endforeach; ?>
                 <?php endforeach; ?>
-            </ul>
-        <?php else: ?>
-            <?php if (isset($response['result'])) :?>
-                <?php $result = $response['result']; ?>
-                <ul>
-                    <li>
-                        <h3>
-                            <?php $payOrderId = (isset($result['pay_order_id'])) ? $result['pay_order_id'] : null; ?>
-                            <?php echo $helper->__('Pay Order ID %s', $payOrderId); ?>
-                        </h3>
-                        <dl class="transactions">
-                            <?php if (isset($result['message'])): ?>
-                                <dt><?php echo $helper->__('Message'); ?></dt>
-                                <dd><?php echo $result['message']; ?></dd>
-                            <?php endif;?>
-                            <?php if (isset($result['status'])): ?>
-                                <dt><?php echo $helper->__('Status'); ?></dt>
-                                <dd><?php echo $result['status']; ?></dd>
-                            <?php endif;?>
-                        </dl>
-                    </li>
-                </ul>
-            <?php else: ?>
-                <?php echo $helper->__('There wasn\'t any records for this transaction') ;?>
-            <?php endif;?>
-        <?php endif; ?>
-    </div>
+            <?php endif; ?>
+        </dl>
+    <?php endif; ?>
+</div>
 </body>
 </html>

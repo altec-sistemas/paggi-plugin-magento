@@ -61,17 +61,22 @@ class Paggi_Payment_Adminhtml_ReportController
                 $order = Mage::getModel('sales/order')->load($orderId);
 
                 if ($order->getId()) {
-                    /** @var Paggi_Payment_Helper_Data $helper */
-                    $helper = $this->_getHelper();
+                    /** @var  $payment */
+                    $payment = $order->getPayment();
+                    $paggiOrderId = $payment->getAdditionalInformation('order_id');
 
-                    $response = $helper->getApi()->pullReport($order);
-                    $record = isset($response['records'][0]) ? $response['records'][0] : null;
-                    if ($record) {
-                        $this->getOrderHelper()->updatePayment($order, $record);
+                    /** @var Paggi_Payment_Helper_Data $helper */
+                    $helper = $this->getHelper();
+
+                    $response = $helper->getApi()->getOrder($order, $paggiOrderId);
+                    if ($response) {
+                        $message = $this->getOrderHelper()->updatePayment($order, $response);
+                        Mage::getSingleton('adminhtml/session')->addNotice($message);
                     }
                 }
 
             }
+
         } catch (Exception $e) {
             Mage::logException($e);
         }
@@ -84,7 +89,7 @@ class Paggi_Payment_Adminhtml_ReportController
     /**
      * @return Paggi_Payment_Helper_Data|Mage_Core_Helper_Abstract
      */
-    protected function _getHelper()
+    protected function getHelper()
     {
         if (!$this->_helper) {
             /** @var Paggi_Payment_Helper_Data _helper */
