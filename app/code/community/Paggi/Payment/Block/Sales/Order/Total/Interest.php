@@ -64,9 +64,9 @@ class Paggi_Payment_Block_Sales_Order_Total_Interest extends Mage_Core_Block_Tem
 
     public function initTotals()
     {
-        if ((float) $this->getOrder()->getBaseInterestAmount()) {
+        if ((float) $this->getOrder()->getBasePaggiInterestAmount()) {
             $source = $this->getSource();
-            $value  = $source->getInterestAmount();
+            $value  = $source->getPaggiInterestAmount();
             $this->getParentBlock()->addTotal(new Varien_Object(array(
                 'code'   => 'interest',
                 'strong' => false,
