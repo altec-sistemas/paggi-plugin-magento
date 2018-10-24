@@ -21,14 +21,21 @@
  *
  */
 -->
-<layout version="1.0.2">
+<layout version="1.0.3">
 
-    <default>
+    <checkout_onepage_index>
         <reference name="head">
-            <action method="addJs"><script>paggi/payment.js</script></action>
-            <action method="addItem"><type>js_css</type><script>paggi/payment.css</script></action>
+            <action method="addJs" ifconfig="payment/paggi_cc/active"><script>paggi/payment.js</script></action>
+            <action method="addItem" ifconfig="payment/paggi_cc/active"><type>js_css</type><script>paggi/payment.css</script></action>
         </reference>
-    </default>
+    </checkout_onepage_index>
+
+    <onestepcheckout_index_index>
+        <reference name="head">
+            <action method="addJs" ifconfig="payment/paggi_cc/active"><script>paggi/payment.js</script></action>
+            <action method="addItem" ifconfig="payment/paggi_cc/active"><type>js_css</type><script>paggi/payment.css</script></action>
+        </reference>
+    </onestepcheckout_index_index>
 
     <customer_account>
         <!-- Mage_Wishlist -->
