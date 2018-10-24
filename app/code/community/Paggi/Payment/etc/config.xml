@@ -22,7 +22,7 @@
 <config>
     <modules>
         <Paggi_Payment>
-            <version>1.0.2</version>
+            <version>1.0.3</version>
         </Paggi_Payment>
     </modules>
 
@@ -250,6 +250,7 @@
                 <title>Paggi - Cartão de Crédito</title>
                 <payment_action>order</payment_action>
                 <order_status>pending</order_status>
+                <show_cvv_saved_cards>1</show_cvv_saved_cards>
                 <authorized_order_status>processing</authorized_order_status>
                 <captured_order_status>processing</captured_order_status>
                 <stop_processing>1</stop_processing>

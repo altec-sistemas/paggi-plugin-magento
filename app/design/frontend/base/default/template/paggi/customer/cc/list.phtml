@@ -1,7 +1,5 @@
 <?php
 /**
- * Bizcommerce Desenvolvimento de Plataformas Digitais Ltda - Epp
- *
  * INFORMAÇÕES SOBRE LICENÇA
  *
  * Open Software License (OSL 3.0).
@@ -22,34 +20,23 @@
 /** @var Paggi_Payment_Block_Customer_Cc_List $this */
 
 /** @var Paggi_Payment_Helper_Data $helper */
-$helper = Mage::helper('maxipago');
+$helper = Mage::helper('paggi');
+$confirm = 'Are you sure you want to remove your saved card %s'
 ?>
 <?php echo $this->getMessagesBlock()->toHtml() ?>
+
 <div class="page-title">
     <h1><?php echo $this->__('My Saved Cards') ?></h1>
 </div>
+
 <?php if( $this->getCollection() && $this->count()): ?>
     <?php echo $this->getToolbarHtml() ?>
         <table class="data-table" id="my-reviews-table">
-            <col width="90" />
             <col />
             <col width="60"/>
             <tbody>
                 <?php foreach ($this->getCollection() as $card): ?>
-                    <?php
-                    $brand = $helper->getBrand($card->getBrand());
-                    $slug = $helper->slugify($brand);
-                    ?>
-                    <tr class="<?php echo $slug;?>">
-                        <td>
-                            <span>
-                                <img src="<?php echo Mage::getBaseUrl('js'); ?>paggi/cards/<?php echo $slug; ?>.svg"
-                                     alt="<?php echo $this->__($brand) ?>"
-                                     title="<?php echo $this->__($brand) ?>"
-                                />
-                            </span>
-
-                        </td>
+                    <tr>
                         <td>
                             <h2 class="product-name">
                                 <?php echo $this->escapeHtml($card->getDescription()) ?>
@@ -57,7 +44,7 @@ $helper = Mage::helper('maxipago');
                         </td>
                         <td class="remove">
                             <a href="<?php echo $this->getRemoveLink() ?>id/<?php echo $card->getId() ?>"
-                               onclick="if (!confirm('<?php echo $this->__('Are you sure you want to remove your saved card %s', $card->getDescription()); ?>')) return false;"
+                               onclick="if (!confirm('<?php echo $this->__($confirm, $card->getDescription()); ?>')); return false;"
                                class="nobr"
                             >
                                 <?php echo $this->__('Remove Card'); ?>
@@ -72,6 +59,11 @@ $helper = Mage::helper('maxipago');
 <?php else: ?>
     <p><?php echo $this->__('You have no saved cards.') ?></p>
 <?php endif; ?>
+
 <div class="buttons-set">
-    <p class="back-link"><a href="<?php echo $this->escapeUrl($this->getBackUrl()) ?>"><small>&laquo; </small><?php echo $this->__('Back') ?></a></p>
+    <p class="back-link">
+        <a href="<?php echo $this->escapeUrl($this->getBackUrl()) ?>">
+            <small>&laquo; </small><?php echo $this->__('Back') ?>
+        </a>
+    </p>
 </div>

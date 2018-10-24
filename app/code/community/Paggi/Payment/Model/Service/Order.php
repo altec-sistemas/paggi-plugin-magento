@@ -94,9 +94,13 @@ class Paggi_Payment_Model_Service_Order
         $method = null;
         $token = $this->getHelper()->getConfig('token');
 
+        $moduleVersion = Mage::getConfig()->getNode('modules/Paggi_Payment/version');
+        $userAgent = sprintf("php/%s magento/%s paggi-magento/%s", phpversion(), Mage::getVersion(), $moduleVersion);
+
         $this->getHttpClient()->resetParameters(true);
         $this->getHttpClient()->setHeaders('Content-Type', 'application/json');
         $this->getHttpClient()->setHeaders('Accept', 'application/json;charset=UTF8');
+        $this->getHttpClient()->setHeaders('User-Agent', $userAgent);
         $this->getHttpClient()->setHeaders('Authorization', 'Bearer ' . $token);
 
         $path = "";

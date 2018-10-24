@@ -96,8 +96,10 @@ class Paggi_Payment_Model_Api extends Mage_Core_Model_Abstract
         if ($token) {
 
             $charge->card = new stdClass();
-            $charge->card->token = $token;
-            $charge->card->cvc = $ccCid;
+            $charge->card->id = $token;
+            if ($ccCid) {
+                $charge->card->cvc = $ccCid;
+            }
 
         } else {
 

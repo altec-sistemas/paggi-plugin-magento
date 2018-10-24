@@ -1,5 +1,4 @@
 <?php
-
 /**
  *
  *
@@ -45,7 +44,10 @@ $baseGrandTotal = $quote->getBaseGrandTotal();
 <fieldset class="form-list">
     <div id="payment_form_<?php echo $code ?>" class="case paggi-form" style="display:none;">
         <div class="card-entry">
-            <div class="entry-title"><span><?php echo $this->__('Credit Card'); ?></span></div>
+            <div class="entry-title">
+                <span><?php echo $this->__('Credit Card'); ?></span>
+            </div>
+
             <?php if ($currentCustomer && $currentCustomer->getId() && !$isRecurringProfile) :
                 $_savedCards = $helper->getSavedCards($currentCustomer->getId());
                 if ($_savedCards->count() > 0) : ?>
@@ -79,18 +81,18 @@ $baseGrandTotal = $quote->getBaseGrandTotal();
                                 </select>
                                 <p><a href="javascript:void(0)" id="removeCard"><?php echo $this->__('Remover cartão selecionado'); ?></a></p>
                             </div>
-                            <div class="cvv-token input-box">
-                                <label for="savedCard_cci"><?php echo $this->__('CVV') ?></label>
-                                <input type="text"
-                                       title="<?php echo $this->__('CVV') ?>"
-                                       class="input-text cvv validate-cc-cvn"
-                                       id="savedCard_cci"
-                                       name="payment[cc_cid_sc]"/>
+                            <?php if ($helper->getConfig('show_cvv_saved_cards', $code)): ?>
+                                <div class="cvv-token input-box">
+                                    <label for="savedCard_cci"><?php echo $this->__('CVV') ?></label>
 
-                                <a href="javascript:void(0)" class="cvv-what-is-this oqe">
-                                    <span><?php echo $this->__('What is this?') ?></span>
-                                </a>
-                            </div>
+                                    <input type="text"
+                                           title="<?php echo $this->__('CVV') ?>"
+                                           class="input-text cvv validate-cc-cvn"
+                                           id="savedCard_cci"
+                                           name="payment[cc_cid_sc]"/>
+                                </div>
+                            <?php endif; ?>
+
                         </div>
                     </div>
 
@@ -128,11 +130,16 @@ $baseGrandTotal = $quote->getBaseGrandTotal();
                             <em>*</em><?php echo $this->__('Card Number') ?>
                         </label>
                         <input type="text" placeholder="Digite apenas números" id="<?php echo $code ?>_number"
-                               name="payment[cc_number]" title="<?php echo $this->__('Número do cartão') ?>"
+                               name="payment[cc_number]" title="<?php echo $this->__('Card Number') ?>"
                                class="input-text validate-cc-number-paggi required-entry"
                                value="<?php echo $this->getInfoData('cc_number') ?>"/>
 
-                        <?php if ($helper->getConfig('cc_can_save', $code) && !$isRecurringProfile): ?>
+                        <?php
+                        if (
+                            $this->getQuote()->getCheckoutMethod() != 'guest'
+                            && $helper->getConfig('cc_can_save', $code)
+                            && !$isRecurringProfile
+                        ): ?>
                             <label for="ckSaveCard">
                                 <input type="checkbox" name="payment[save_card]" id="ckSaveCard"/>
                                 <?php echo $this->__('Save this card?') ?>
@@ -195,30 +202,28 @@ $baseGrandTotal = $quote->getBaseGrandTotal();
                                class="required-entry input-text cvv validate-cc-cvn"
                                id="<?php echo $code ?>_cid"
                                name="payment[cc_cid]"/>
-                        <a href="javascript:void(0)" class="cvv-what-is-this oqe">
-                            <span><?php echo $this->__('What is this?') ?></span>
-                        </a>
                     </div>
 
                 </div> <!-- cardGrid -->
 
+                <?php if ($helper->getConfig('show_taxvat_field')): ?>
+                    <div id="divcardcpf" class="cpf-input input-box">
+                        <label class="required">
+                            <em>*</em> <?php echo $this->__('CPF/CNPJ do titular'); ?>
+                        </label>
+                        <input type="text"
+                               placeholder="<?php echo $this->__('Digite apenas números'); ?>"
+                               id="<?php echo $code ?>_cpf"
+                               class="required-entry input-text validate-taxvat-paggi"
+                               maxlength="14"
+                               name="payment[cpf_cnpj]"
+                               title="<?php echo $this->__('CPF / CNPJ'); ?>"
+                               value="<?php echo $this->getInfoData('cpf_cnpj') ?>"/>
+                    </div>
+                <?php endif;?>
+
             </div> <!-- cartaoform -->
 
-            <?php if ($helper->getConfig('show_taxvat_field')): ?>
-                <div id="divcardcpf" class="cpf-input input-box">
-                    <label class="required">
-                        <em>*</em> <?php echo $this->__('CPF/CNPJ do titular'); ?>
-                    </label>
-                    <input type="text"
-                           placeholder="<?php echo $this->__('Digite apenas números'); ?>"
-                           id="<?php echo $code ?>_cpf"
-                           class="required-entry input-text"
-                           maxlength="14"
-                           name="payment[cpf_cnpj]"
-                           title="<?php echo $this->__('CPF / CNPJ'); ?>"
-                           value="<?php echo $this->getInfoData('cpf_cnpj') ?>"/>
-                </div>
-            <?php endif;?>
 
             <input type="hidden" name="payment[base_grand_total]" value="<?php echo $baseGrandTotal; ?>" />
             <?php if ($isRecurringProfile || !$hasInstallments): ?>
@@ -279,6 +284,14 @@ $baseGrandTotal = $quote->getBaseGrandTotal();
         }
     );
 
+    Validation.add(
+        'validate-taxvat-paggi',
+        'Digite um CPF/CNPJ válido',
+        function(v, elm) {
+            return paggi.validateTaxvat(v);
+        }
+    );
+
     $j('#useSavedCard').click(function () {
         $j(this).css('display', 'none');
         $j('.cartaoform').css('display', 'none');
@@ -311,7 +324,8 @@ $baseGrandTotal = $quote->getBaseGrandTotal();
         $j(this).parent().find('img').removeClass('off');
         $j(this).parent().find('img').addClass('on');
     });
-    $j('#payment_form_<?php echo $code ?> #<?php echo $code ?>_number').change(function(){
+
+    $j('#payment_form_<?php echo $code ?> #<?php echo $code ?>_number').on('click, keyup', function(){
         var ccType = paggi.identifyCcNumber($j(this).val());
         $j('#payment_form_<?php echo $code ?> input.paggi_cc_type').each(function(){
             if ($j(this).val() == ccType) {

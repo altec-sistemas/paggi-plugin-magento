@@ -34,7 +34,7 @@
                     <comment><![CDATA[
                         <div class="paggi_main">
                             <div class="paggi_description">
-                                <strong>Módulo Magento Paggi versão 1.0.2</strong>
+                                <strong>Módulo Magento Paggi versão 1.0.3</strong>
                             </div>
                         </div>
                     ]]></comment>
@@ -245,6 +245,17 @@
                                     <show_in_website>1</show_in_website>
                                     <show_in_store>1</show_in_store>
                                 </cc_can_save>
+
+                                <show_cvv_saved_cards translate="label">
+                                    <label>Show CVV to Saved Cards</label>
+                                    <frontend_type>select</frontend_type>
+                                    <source_model>adminhtml/system_config_source_yesno</source_model>
+                                    <sort_order>50</sort_order>
+                                    <show_in_default>1</show_in_default>
+                                    <show_in_website>1</show_in_website>
+                                    <show_in_store>1</show_in_store>
+                                    <depends><cc_can_save>1</cc_can_save></depends>
+                                </show_cvv_saved_cards>
 
                                 <order_status>
                                     <label>New Order Status</label>

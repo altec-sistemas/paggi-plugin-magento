@@ -1,4 +1,23 @@
 <?php
+/**
+ * INFORMAÇÕES SOBRE LICENÇA
+ *
+ * Open Software License (OSL 3.0).
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * DISCLAIMER
+ *
+ * Não edite este arquivo caso você pretenda atualizar este módulo futuramente
+ * para novas versões.
+ *
+ * @category      Paggi
+ * @package       Paggi_Payment
+ * @author        Thiago Contardi <thiago@contardi.com.br>
+ *
+ * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ *
+ */
+
 /** @var Paggi_Payment_Block_Info_Cc $this */
 /** @var Mage_Payment_Model_Info $info */
 $info = $this->getInfo();
@@ -16,14 +35,12 @@ $installments = $info->getAdditionalInformation('cc_installments');
 $installmentsValue = $info->getAdditionalInformation('cc_installment_value');
 $interestRate = $info->getAdditionalInformation('cc_interest_rate');
 $cpfCnpj = $info->getAdditionalInformation('cpf_cnpj');
-$orderId = $info->getAdditionalInformation('order_id');
-$status = $info->getAdditionalInformation('status');
+
 $savedCardUsed = $info->getAdditionalInformation('cc_description');
 $isRecurringProfile = $info->getAdditionalInformation('recurring_profile');
 $totalWithInterest = $info->getAdditionalInformation('cc_total_with_interest');
 
-$tid = $info->getAdditionalInformation('processor_transaction_id');
-$nsu = $info->getAdditionalInformation('processor_reference_number');
+$tid = $info->getAdditionalInformation('transaction_id');
 ?>
 <p><b><?php echo $this->getMethod()->getTitle() ?></b></p>
 <div class="paggi_cc_information">
@@ -43,13 +60,13 @@ $nsu = $info->getAdditionalInformation('processor_reference_number');
     <?php
     $textInterest = '';
     if ($interestRate)
-        $textInterest = $this->__('(juros de %s)', $interestRate.'%');
+        $textInterest = $this->__('(interest rate: %s)', $interestRate.'%');
     ?>
 
     <?php if (!$isRecurringProfile && $installments > 1): ?>
         <p>
-            <?php echo $this->__('Parcelas: %s', $installments.'x') ?>
-            <?php echo $this->__('de %s', number_format($installmentsValue, 2, ',', '.'));?>
+            <?php echo $this->__('Installments: %s', $installments.'x') ?>
+            <?php echo $this->__('of %s', number_format($installmentsValue, 2, ',', '.'));?>
             <?php echo $textInterest;?>
         </p>
         <?php if ($totalWithInterest && $textInterest): ?>
@@ -59,10 +76,6 @@ $nsu = $info->getAdditionalInformation('processor_reference_number');
 
     <?php if($tid): ?>
         <p><?php echo $this->__('TID: %s', $tid) ?></p>
-    <?php endif; ?>
-
-    <?php if($nsu): ?>
-        <p><?php echo $this->__('NSU: %s', $nsu) ?></p>
     <?php endif; ?>
 
 </div>

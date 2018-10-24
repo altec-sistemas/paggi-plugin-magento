@@ -18,18 +18,12 @@
     top: -5px;
 
 }
-#payment_form_paggi_cc .save-card {
 
-}
-
-#payment_form_paggi_cc input.paggi_cc_type,
-#payment_form_paggi_dc input.paggi_dc_type {
+#payment_form_paggi_cc input.paggi_cc_type {
     display:none;
 }
 
-#payment_form_paggi_eft .radio-flags,
-#payment_form_paggi_cc .radio-flags,
-#payment_form_paggi_dc .radio-flags{
+#payment_form_paggi_cc .radio-flags{
     display: -webkit-box;
     display: -ms-flexbox;
     display: -moz-flex;
@@ -46,21 +40,13 @@
     margin-bottom:20px;
 }
 
-#payment_form_paggi_cc .radio-flags img,
-#payment_form_paggi_dc .radio-flags img {
+#payment_form_paggi_cc .radio-flags img {
     transition: 0.2s;
     border-radius: 5px;
     margin: 2px;
     width: 60px;
-    max-height:39px;
 }
-#payment_form_paggi_ticket .radio-flags img,
-#payment_form_paggi_eft .radio-flags img{
-    width: 45px;
-    margin: 0 5px;
-}
-#payment_form_paggi_cc .radio-flags .off,
-#payment_form_paggi_dc .radio-flags .off {
+#payment_form_paggi_cc .radio-flags .off {
     filter: grayscale(100%);
     border: none
 }
@@ -70,16 +56,13 @@
     transition: 0.2s;
     border: 2px solid #f66;
 }
-#payment_form_paggi_cc .radio-flags .tit,
-#payment_form_paggi_dc .radio-flags .tit {
+#payment_form_paggi_cc .radio-flags .tit {
     padding:0 10px;
     -webkit-align-self: center;
     -ms-flex-item-align: center;
     align-self: center;
 }
-#payment_form_paggi_eft .radio-flags label,
-#payment_form_paggi_cc .radio-flags label,
-#payment_form_paggi_dc .radio-flags label {
+#payment_form_paggi_cc .radio-flags label {
     -webkit-flex: 0 0 auto;
     flex: 0 0 auto;
     display: -webkit-box;
@@ -98,19 +81,27 @@
     margin:0;
     cursor:pointer;
 }
-#payment_form_paggi_cc .radio-flags label:hover,
-#payment_form_paggi_dc .radio-flags label:hover{
+
+#payment_form_paggi_cc .radio-flags label:hover{
     background:#eee
 }
-#payment_form_paggi_cc .radio-flags input,
-#payment_form_paggi_dc .radio-flags input {
+
+#payment_form_paggi_cc .radio-flags input {
     -webkit-flex: 0 0 auto;
     flex: 0 0 auto;
     margin-right:0;
     top:0
 }
-#payment_form_paggi_cc .radio-flags .ico,
-#payment_form_paggi_dc .radio-flags .ico {
+
+#payment_form_paggi_cc .radio-flags{
+    position: relative;
+}
+#payment_form_paggi_cc .radio-flags label .validation-advice{
+    position: absolute;
+    bottom:-20px;
+}
+
+#payment_form_paggi_cc .radio-flags .ico {
     -webkit-flex: 0 0 auto;
     flex: 0 0 auto;
     height:60px;
