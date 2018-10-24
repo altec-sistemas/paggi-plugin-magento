@@ -134,9 +134,8 @@ $baseGrandTotal = $quote->getBaseGrandTotal();
             </div> <!-- cartaoform -->
 
             <input type="hidden" name="payment[base_grand_total]" value="<?php echo $baseGrandTotal; ?>" />
-            <?php if ($isRecurringProfile || !$hasInstallments): ?>
+            <?php if (!$hasInstallments): ?>
                 <input type="hidden" name="payment[installments]" value="1" />
-                <input type="hidden" name="payment[recurring_profile]" value="1" />
             <?php else: ?>
                 <div class="pars input-box">
                     <label for="paggi_installments" class="required">
