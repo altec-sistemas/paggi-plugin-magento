@@ -134,6 +134,7 @@
 "If the transaction isn't approved, it'll trigger an error to the customer.<br>It'll create an request at Paggi and will not create the store's order.","Se a transação não for aprovada, irá gerar um arro para o consumidor, isso poderá gerar uma requisição na Paggi mas não irá gerar ym pedido na loja"
 "Installments: %s","Parcelas: %s"
 "interest rate: %s","juros: %s"
+"(interest rate: %s)","(juros: %s)"
 
 "Paggi_Payment::Cron execution time","Hora de execução da cron"
 "Paggi_Payment::Each 5 minutes","A cada 5 minutos"
